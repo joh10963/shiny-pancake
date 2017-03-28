@@ -86,7 +86,7 @@ class Master(QtGui.QFrame):
         
         steps = [{'title':'Step1','description':'Go to Mall'}, {'title':'Step2','description':'Get Frozen Yogurt'}, {'title':'Step3','description':'Pay'}]
         info = {'name':'Activity 1', 'datetime':'April 1, 2017', 'description':'Going to the mall for frozen yogurt', 'steps':steps}
-        a = Activity(info, width=self.width, height=self.height)
+        a = ActivityFrame(info, width=self.width, height=self.height)
         
         self.frames[1] = a
 
@@ -142,7 +142,7 @@ class MainFrame(BaseFrame):
 class ArrowScroll(QtGui.QFrame):
     '''displays one widget from elements at a time. scroll through list with buttons'''
     
-    def __init__(self, elements, width=0, height=0, parent=None):
+    def __init__(self, elements, width=0, height=0, parent=None): ##### Maybe make the width and height from the parent - like 3/4 the parent height
         '''elements is a list of widgets that are displayed'''
         QtGui.QFrame.__init__(self, parent)
         
@@ -245,60 +245,16 @@ class ButtonLabel(QtGui.QLabel):
             self.palette.setColor(self.backgroundRole(), self.normal_color)
             self.setPalette(self.palette)
 
-class Memory(QtGui.QFrame):
-    
-    def __init__(self, name='', date_time='', descr='', tagged_people='', pic_filename='', width=0, height=0, parent=None):
-        QtGui.QFrame.__init__(self, parent)
-        
-        self.setFrameShape(QtGui.QFrame.Box) 
-        
-        big_font = QtGui.QFont()
-        big_font.setPointSize(24)  
-        
-        small_font = QtGui.QFont()
-        small_font.setPointSize(16) 
-        
-        self.grid = QtGui.QGridLayout()        
 
-        #Add the picture
-        self.pic = QtGui.QLabel(self)
-        self.pixmap = QtGui.QPixmap(pic_filename)
-        new_pixmap = self.pixmap.scaled(width, height/2, QtCore.Qt.KeepAspectRatio)
-        self.pic.setPixmap(new_pixmap)
         
-        #Add the labels
-        self.name = QtGui.QLabel(name, self)
-        self.name.setFont(big_font)
-        
-        self.datetime = QtGui.QLabel(date_time, self)
-        self.datetime.setFont(big_font)
-        
-        self.tags = QtGui.QLabel(tagged_people, self) ############These need to be clickable labels
-        self.tags.setFont(big_font)
-        
-        #Add the description
-        self.descr = QtGui.QLabel(descr, self)
-        self.descr.setWordWrap(True)
-        self.descr.setFont(small_font)
-        
-        
-        #add the widgets to the layout manager
-        self.grid.addWidget(self.pic, 0, 0) 
-        self.grid.addWidget(self.tags, 1, 0)
-        self.grid.addWidget(self.name, 2, 0)
-        self.grid.addWidget(self.datetime, 3, 0)
-        self.grid.addWidget(self.descr, 4, 0)
-        
-        self.setLayout(self.grid) 
-        
-class Activity(BaseFrame):
+class ActivityFrame(BaseFrame):
     
-    def __init__(self, d, width=0, height=0, parent=None):
+    def __init__(self, activity, width=0, height=0, parent=None): #Instead of d, take in an activity object that makes the activity screen part
         '''d is a dictionary of activity attributes'''        
         
         BaseFrame.__init__(self, width, height, parent)
         
-        self.info = d
+        self.activity = activity
         
         self.bigger_font = QtGui.QFont()
         self.bigger_font.setPointSize(36)
@@ -314,92 +270,11 @@ class Activity(BaseFrame):
         self.gridV.addStretch(1)
         
         #Create the main frame containing the information
-        self.create_activity_screen()
+        # self.frame = activity.get_frame()
         self.gridV.addWidget(self.frame)
         self.gridV.addStretch(15)
         
-    def create_activity_screen(self):
-        self.frame = QtGui.QFrame()
-        self.grid = QtGui.QGridLayout()
-        
-        self.name = QtGui.QLabel(self.info['name'])
-        self.name.setFont(self.big_font)
-        
-        self.datetime = QtGui.QLabel(self.info['datetime'])
-        self.datetime.setFont(self.small_font)
-        
-        self.description = QtGui.QLabel(self.info['description'])
-        self.description.setFont(self.small_font)
-    
-        self.grid.addWidget(self.name, 0, 0)
-        self.grid.addWidget(self.datetime, 1, 0)
-        self.grid.addWidget(self.description, 2, 0)
-        
-        row = 3
-        for step_info in self.info['steps']:
-            i = Instruction(step_info, width=self.width, height=self.height/10)
-            self.grid.addWidget(i, row, 0)      
-            row += 1
-        
-        self.frame.setLayout(self.grid)
-        
-class Instruction(QtGui.QFrame):
-    
-    def __init__(self, info, width=0, height=0, parent=None):
-        '''infor contains title and description'''
-        
-        QtGui.QFrame.__init__(self, parent)
-        self.setFrameShape(QtGui.QFrame.StyledPanel)
-        self.setFrameShadow(QtGui.QFrame.Raised)        
-        
-        self.setAutoFillBackground(True) 
-        
-        self.info = info
-        self.grid = QtGui.QGridLayout()
-        
-        self.create_title_frame()
-        self.grid.addWidget(self.title_frame, 0, 0)
-        
-        self.line = QtGui.QFrame(self)
-        self.line.setFrameShape(QtGui.QFrame.HLine)
-        self.grid.addWidget(self.line, 1, 0)
-        
-        
-        self.create_description_frame()
-        self.grid.addWidget(self.descr_frame, 2, 0)
-        
-        self.setLayout(self.grid)
-        
-    def create_title_frame(self):
-        #Create a title bar that is a different color
-        self.title_frame = QtGui.QFrame(self)
-        self.title_frame_grid = QtGui.QHBoxLayout(self.title_frame)
-        
-        #color the frame        
-        self.title_frame.setAutoFillBackground(True) 
-        self.title_frame.palette().setColor(self.title_frame.backgroundRole(), QtCore.Qt.blue)
-        self.title_frame.setPalette(self.title_frame.palette())
-        
-        #Add the title
-        self.title_label = QtGui.QLabel(self.info['title'])
-        self.title_frame_grid.addStretch(1)
-        self.title_frame_grid.addWidget(self.title_label)
-        self.title_frame_grid.addStretch(1)
-        
-        self.title_frame.setLayout(self.title_frame_grid)
-        
-    def create_description_frame(self):
-         #Create a title bar that is a different color
-        self.descr_frame = QtGui.QFrame(self)
-        self.descr_frame_grid = QtGui.QHBoxLayout(self.descr_frame)
-        
-        #Add the title
-        self.descr_label = QtGui.QLabel(self.info['description'])
-        self.descr_frame_grid.addStretch(1)
-        self.descr_frame_grid.addWidget(self.descr_label)
-        self.descr_frame_grid.addStretch(1)
-        
-        self.descr_frame.setLayout(self.descr_frame_grid)
+
         
 class ScheduleFrame(BaseFrame):
 
