@@ -7,6 +7,7 @@ Created on Wed Mar 22 12:11:53 2017
 
 import sys, os
 from PyQt4 import QtCore, QtGui
+import appobjects
 
 class BaseFrame(QtGui.QFrame):
     '''Creates a Frame widget that displays the current date and time'''
@@ -109,6 +110,14 @@ class Master(QtGui.QFrame):
          
     def open_schedule_screen(self):
         self.cw.setCurrentWidget(self.frames[2])
+        
+    def read(self):
+        '''read in a file of pickled objects or something'''
+        pass
+    def write(self):
+        '''write all the variables to a file before closing'''
+        pass
+    
 
 
 class MainFrame(BaseFrame):

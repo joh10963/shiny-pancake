@@ -215,6 +215,10 @@ class Activity(object):
         self.width = width
         self.height = height
         self.frame.resize(self.width, self.height)
+
+class ActivitiesList(object):
+    '''manages all the activities'''
+    pass
         
 class Memory(object):
     
