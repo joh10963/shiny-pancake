@@ -7,12 +7,14 @@ Created on Wed Mar 22 12:11:53 2017
 
 import sys, os
 from PyQt4 import QtCore, QtGui
-import appobjects
+import Accounts
 
 class BaseFrame(QtGui.QFrame):
     '''Creates a Frame widget that displays the current date and time'''
-    def __init__(self, width=0, height=0, parent=None):
+    def __init__(self, master=None, width=0, height=0, parent=None, back=False):
         QtGui.QFrame.__init__(self, parent)
+        
+        self.master = master
 
         self.width = width
         self.height = height
@@ -26,18 +28,24 @@ class BaseFrame(QtGui.QFrame):
         self.small_font.setPointSize(18)
         
         #Create the widgets
+        self.back_but = ButtonLabel(pic='home.png', flash=True, width=self.width/7, height=self.height/15)
+        self.back_but.clicked.connect(self.master.go_to_home_screen)
+        
+        
         self.time_label = QtGui.QLabel('Time', self)
         self.time_label.setFont(self.big_font)
         self.date_label = QtGui.QLabel('Date', self)
         self.date_label.setFont(self.small_font)
         
         #Place them at the top of the frame     
-        self.gridHt = QtGui.QHBoxLayout()
+        self.gridHt = QtGui.QHBoxLayout() 
         self.gridHt.addStretch(1)
         self.gridHt.addWidget(self.time_label)
         self.gridHt.addStretch(1)
         
         self.gridHd = QtGui.QHBoxLayout()
+        if back:
+            self.gridHd.addWidget(self.back_but)
         self.gridHd.addStretch(1)
         self.gridHd.addWidget(self.date_label)
         self.gridHd.addStretch(1)
@@ -66,69 +74,51 @@ class Master(QtGui.QFrame):
         
         screenShape = QtGui.QDesktopWidget().screenGeometry()
         self.width = screenShape.width()/3
-        self.height = screenShape.height() - 50 
+        self.height = screenShape.height() - 80 
         self.resize(self.width, self.height) 
         
-        self.frames = 3*[None]
-
-        #create a list of widgets
-        elements = 5*[None]
-        for i in range(5):
-            a = 'Name ' + str(i)
-            b = 'Saturday, April ' + str(i)
-            c = 'Description ' + str(i) + 'bvdjnsv vkmdsvd dvmlsdmvkd mvdk  vdk siiisv llsf nndsln v'
-            d = 'Person ' + str(i)
-            e = 'dog.png'
-            elements[i] = Memory(name=a, date_time=b, descr=c, tagged_people=d, pic_filename=e, width=self.width, height=3*self.height/4)
+        #Create an account data that stores all the fake data and eventually will store real data haha
+        self.account = Accounts.Account(self.width, self.height)
+        
+        self.frames = []
+        
+        self.frames.append(MainFrame(master=self, account=self.account, width=self.width, height=self.height))
+        for act in self.account.get_activities():
+            self.frames.append(ActivityFrame(act, master=self, width=self.width, height=self.height, back=True))
             
-        m = MainFrame(master=self, memories=elements, width=self.width, height=self.height)
-        
-        self.frames[0] = m
-        
-        steps = [{'title':'Step1','description':'Go to Mall'}, {'title':'Step2','description':'Get Frozen Yogurt'}, {'title':'Step3','description':'Pay'}]
-        info = {'name':'Activity 1', 'datetime':'April 1, 2017', 'description':'Going to the mall for frozen yogurt', 'steps':steps}
-        a = ActivityFrame(info, width=self.width, height=self.height)
-        
-        self.frames[1] = a
-
-        sched = ScheduleFrame(width=self.width, height=self.height)
-        self.frames[2] = sched        
-        
+        self.frames.append(ScheduleFrame(master=self, width=self.width, height=self.height, back=True))
+       
         self.cw = QtGui.QStackedWidget()
-        self.cw.addWidget(a)
-        self.cw.addWidget(m)
-        self.cw.addWidget(sched)
+        for frame in self.frames:
+            self.cw.addWidget(frame)
         
-        self.cw.setCurrentWidget(m)
+       
+        self.cw.setCurrentWidget(self.frames[0])
         
         self.grid = QtGui.QGridLayout()
         self.grid.addWidget(self.cw, 0, 0)
         self.setLayout(self.grid)
-        
+    
+    def go_to_home_screen(self):
+        self.cw.setCurrentWidget(self.frames[0])
+    
     def open_activity_screen(self):
          self.cw.setCurrentWidget(self.frames[1])
          
     def open_schedule_screen(self):
-        self.cw.setCurrentWidget(self.frames[2])
-        
-    def read(self):
-        '''read in a file of pickled objects or something'''
-        pass
-    def write(self):
-        '''write all the variables to a file before closing'''
-        pass
+        self.cw.setCurrentWidget(self.frames[-1])
     
 
 
 class MainFrame(BaseFrame):
     '''This is the main menu for the application'''
-    def __init__(self, master=None, memories=[], width=0, height=0, parent=None):
-        BaseFrame.__init__(self, width, height, parent)      
+    def __init__(self, master=None, account=None, width=0, height=0, parent=None, back=False):
+        BaseFrame.__init__(self, master, width, height, parent, back)      
         
-        self.master = master
+        self.account = account
         
         #create the scroll frame of elements
-        self.scroll = ArrowScroll(memories, width=self.width, height=self.height*3/4)
+        self.scroll = ArrowScroll(self.account.get_memories(), width=self.width, height=self.height*3/4)
         
         #create the mailbox icon
         self.mailbox = ButtonLabel(pic='mailbox.png', width=self.width/2, height=self.height/8)
@@ -168,7 +158,7 @@ class ArrowScroll(QtGui.QFrame):
         #The elements will be stored in a QStackedWidget so only one is available to view at a time
         self.cw = QtGui.QStackedWidget()
         for e in elements:
-            self.cw.addWidget(e)
+            self.cw.addWidget(e.get_frame())
         
         #create a pointer of the currently displayed widget
         self.current = 0
@@ -205,7 +195,6 @@ class ArrowScroll(QtGui.QFrame):
             self.current += 1
             self.cw.setCurrentIndex(self.current)
 
-################## Make the buttons go horizontal - scroll horizontal ##################################
 class ButtonLabel(QtGui.QLabel):
     '''A label with button-like behavior so you have clickable pictures'''
     
@@ -258,10 +247,10 @@ class ButtonLabel(QtGui.QLabel):
         
 class ActivityFrame(BaseFrame):
     
-    def __init__(self, activity, width=0, height=0, parent=None): #Instead of d, take in an activity object that makes the activity screen part
+    def __init__(self, activity, master=None, width=0, height=0, parent=None, back=False): 
         '''d is a dictionary of activity attributes'''        
         
-        BaseFrame.__init__(self, width, height, parent)
+        BaseFrame.__init__(self, master, width, height, parent, back)
         
         self.activity = activity
         
@@ -269,28 +258,44 @@ class ActivityFrame(BaseFrame):
         self.bigger_font.setPointSize(36)
         
         #create a title
-        self.title = QtGui.QLabel('Activity Suggestion')
+        self.title = QtGui.QLabel('Activity Suggestion', self)
         self.title.setFont(self.bigger_font)
+        self.line = QtGui.QFrame(self)
+        self.line.setFrameShape(QtGui.QFrame.HLine)
         self.h1 = QtGui.QHBoxLayout()
         self.h1.addStretch(1)
         self.h1.addWidget(self.title)
+        self.h1.addWidget(self.line)
         self.h1.addStretch(1)
         self.gridV.addLayout(self.h1)
-        self.gridV.addStretch(1)
         
         #Create the main frame containing the information
-        # self.frame = activity.get_frame()
+        self.frame = activity.get_frame()
         self.gridV.addWidget(self.frame)
-        self.gridV.addStretch(15)
+        
+        self.accept_but = QtGui.QPushButton('Accept', self)
+        self.accept_but.setFont(self.big_font)
+        self.decline_but = QtGui.QPushButton('Decline', self)        
+        self.decline_but.setFont(self.big_font)
+        
+        self.h2 = QtGui.QHBoxLayout()
+        self.h2.addStretch(1)
+        self.h2.addWidget(self.accept_but)
+        self.h2.addStretch(1)
+        self.h2.addWidget(self.decline_but)
+        self.h2.addStretch(1)
+        
+        self.gridV.addLayout(self.h2)
         
 
         
 class ScheduleFrame(BaseFrame):
 
-    def __init__(self, width=0, height=0, parent=None):
-        BaseFrame.__init__(self, width, height, parent)
+    def __init__(self, master=None, width=0, height=0, parent=None, back=False):
+        BaseFrame.__init__(self, master, width, height, parent, back)
         
         self.cal = QtGui.QCalendarWidget()
+        self.cal.resize(self.width, self.height/2)
 
         self.gridV.addWidget(self.cal)
         

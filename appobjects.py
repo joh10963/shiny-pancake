@@ -16,6 +16,12 @@ class Instruction(object):
         self.location = location
         self.description = description
         
+        self.big_font = QtGui.QFont()
+        self.big_font.setPointSize(36)  
+        
+        self.small_font = QtGui.QFont()
+        self.small_font.setPointSize(20) 
+        
         self.parent = parent
         
         self.create_frame()
@@ -38,6 +44,7 @@ class Instruction(object):
         self.title_frame.setPalette(self.title_frame.palette())
 
         self.title_label = QtGui.QLabel(self.title)
+        self.title_label.setFont(self.big_font)
         self.title_frame_grid.addStretch(1)
         self.title_frame_grid.addWidget(self.title_label)
         self.title_frame_grid.addStretch(1)
@@ -53,8 +60,11 @@ class Instruction(object):
         self.descr_frame_grid = QtGui.QFormLayout(self.descr_frame)
         
         self.datetime_label = QtGui.QLabel(self.datetime, self.descr_frame)
+        self.datetime_label.setFont(self.small_font)
         self.location_label = QtGui.QLabel(self.location, self.descr_frame)
+        self.location_label.setFont(self.small_font)
         self.descr_label = QtGui.QLabel(self.description, self.descr_frame)
+        self.descr_label.setFont(self.small_font)
         self.descr_label.setWordWrap(True)
 
         self.descr_frame_grid.addRow('Time: ', self.datetime_label)
@@ -119,6 +129,7 @@ class InstructionList(object):
         self.grid = QtGui.QGridLayout(self.frame)
         
         self.scroll_area = QtGui.QScrollArea(self.frame)
+        self.scroll_area.setWidgetResizable(True)
         
         self.scroll_frame = QtGui.QFrame(self.scroll_area)
         self.scroll_grid = QtGui.QGridLayout(self.scroll_frame)
@@ -139,7 +150,12 @@ class InstructionList(object):
     def resize_frame(self, width, height):
         self.width = width
         self.height = height
+        #for instr in self.instructions:
+            #instr.resize_frame(self.width, self.height/4)
         self.frame.resize(self.width, self.height)
+    
+    def get_instructions(self):
+        return self.instructions
     
     def add_instruction(self, new_instruction, i=None):
         '''add the instruction to the back of the list if no index i is given, otherwise add it to ith location'''
@@ -190,6 +206,12 @@ class Activity(object):
         self.datetime = self.instruction_list.get_datetime()
         self.location = self.instruction_list.get_location()
         
+        self.big_font = QtGui.QFont()
+        self.big_font.setPointSize(36)  
+        
+        self.small_font = QtGui.QFont()
+        self.small_font.setPointSize(20) 
+        
         self.parent = parent
         self.create_frame()
         
@@ -198,8 +220,12 @@ class Activity(object):
         self.grid = QtGui.QGridLayout()
         
         self.title_label = QtGui.QLabel(self.title)
+        self.title_label.setFont(self.big_font)
         self.datetime_label = QtGui.QLabel(self.datetime)
+        self.datetime_label.setFont(self.small_font)
         self.description_label = QtGui.QLabel(self.description)
+        self.description_label.setFont(self.small_font)
+        self.description_label.setWordWrap(True)
     
         self.grid.addWidget(self.title_label, 0, 0)
         self.grid.addWidget(self.datetime_label, 1, 0)
@@ -214,7 +240,15 @@ class Activity(object):
     def resize_frame(self, width, height):
         self.width = width
         self.height = height
+        #self.instruction_list.resize_frame(self.width, 3*self.height/4)
         self.frame.resize(self.width, self.height)
+        
+    def get_instructions(self):
+        return self.instruction_list.get_instructions()
+        
+    def get_instruction_list(self):
+        return self.instruction_list
+        
 
 class ActivitiesList(object):
     '''manages all the activities'''
