@@ -43,7 +43,15 @@ class Account(object):
                            'instructions':{'Step 1':{'descr':'Pack your beach bag: sunscreen, towel, grapes, and water bottle', 'datetime':'April 5, 12:00 PM', 'location':'House'},
                                            'Step 2':{'descr':'Drive to the beach. Follow GPS instructions.', 'datetime':'April 5, 12:30 PM', 'location':'Beach'},
                                            'Step 3':{'descr':'Walk to the west beach, to the left of the pavillion to meet Susan', 'datetime':'April 2, 12:45 PM', 'location':'Beach'},
-                                           'Step 4':{'descr':'Put your towel in the wash', 'datetime':'April 5, 3:00 PM', 'location':'House'}}}}
+                                           'Step 4':{'descr':'Put your towel in the wash', 'datetime':'April 5, 3:00 PM', 'location':'House'}}},
+                'Making soup for Sarahs tonsils':{'descr':'Make Chicken Wild Rice soup for Sarah and other descriptions make this a really long description more details more details add more details.', 
+                           'instructions':{'Step 1':{'descr':'Drive to the grocery store. Follow GPS instructions.', 'datetime':'April 7, 12:00 PM', 'location':'Grocery Store'},
+                                           'Step 2':{'descr':'At the store, pick up carrots, celery, chicken, milk, and butter', 'datetime':'April 5, 12:30 PM', 'location':'Grocery Store'},
+                                           'Step 3':{'descr':'Drive home. Follow GPS instructions.', 'datetime':'April 2, 12:45 PM', 'location':'Home'},
+                                           'Step 4':{'descr':'In a pot, boil some chicken broth.', 'datetime':'April 5, 1:00 PM', 'location':'House'},
+                                            'Step 5':{'descr':'Add the carrots, celery, and chicken', 'datetime':'April 5, 1:15 PM', 'location':'House'},
+                                            'Step 6':{'descr':'Add the milk and butter.', 'datetime':'April 5, 1:30 PM', 'location':'House'},
+                                            'Step 7':{'descr':'Package up a serving of soup and give to Sarah.', 'datetime':'April 5, 2:00 PM', 'location':'House'}}}}
         
         self.activities = []
         for title, info in acts.iteritems():

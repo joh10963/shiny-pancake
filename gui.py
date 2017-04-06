@@ -8,6 +8,7 @@ Created on Wed Mar 22 12:11:53 2017
 import sys, os
 from PyQt4 import QtCore, QtGui
 import Accounts
+import random
 
 class BaseFrame(QtGui.QFrame):
     '''Creates a Frame widget that displays the current date and time'''
@@ -103,7 +104,8 @@ class Master(QtGui.QFrame):
         self.cw.setCurrentWidget(self.frames[0])
     
     def open_activity_screen(self):
-         self.cw.setCurrentWidget(self.frames[1])
+        i = random.randint(1, 2)
+        self.cw.setCurrentWidget(self.frames[i])
          
     def open_schedule_screen(self):
         self.cw.setCurrentWidget(self.frames[-1])
