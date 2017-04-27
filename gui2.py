@@ -8,6 +8,8 @@ import sys, os
 from PyQt4 import QtCore, QtGui
 from Accounts import Account, Caregiver
 import random
+import appobjects
+import mywidgets
 
 #Create some font sizes
 font_24 = QtGui.QFont()
@@ -71,7 +73,35 @@ class BaseFrame(QtGui.QFrame):
 
 
 class PatientWindow(BaseFrame):
-    pass
+    
+    def __init__(self, width=0, height=0, parent=None, account=None):
+        BaseFrame.__init__(self, width=width, height=height, parent=parent)
+        
+        self.account = account
+        
+        #question widgets
+        self.quest_grid = QtGui.QGridLayout()
+        self.question_label = QtGui.QLabel()
+        self.accept_button = QtGui.QPushButton('Yes')
+        self.accept_button.clicked.connect(self.accepted_activity)
+        self.decline_button = QtGui.QPushButton('No')
+        self.decline_button.clicked.connect(self.declined_activity)
+        self.quest_grid.addWidget(self.question_label, 0, 0, 1, 2)
+        self.quest_grid.addWidget(self.accept_button, 1, 0)
+        self.quest_grid.addWidget(self.decline_button, 1, 1)
+        self.grid.addLayout(self.quest_grid, 0, 0)
+        
+    def ask_question(self, activity):
+        self.current_activity = activity
+        self.question_label.setText(activity.get_question())
+        
+    def accepted_activity(self):
+        self.question_label.setText('This activity has been accepted')
+        self.account.patient_accepted_activity(self.current_activity)
+        
+    def declined_activity(self):
+        self.question_label.setText('This activity has been declined')
+        self.account.patient_declined_activity(self.current_activity)
 
 class CaregiverWindow(BaseFrame):
     
@@ -81,55 +111,43 @@ class CaregiverWindow(BaseFrame):
         #Save the account object
         self.account = account  
         
-        #create a widget that to display different caregiver screens 
-        self.caregiver_frames = []
         self.cw = QtGui.QStackedWidget()
-        for caregiver in self.account.get_caregivers():
-            self.caregiver_frames.append(CaregiverFrame(height=self.height,
-                                                        width=self.width,
-                                                        parent=parent,
-                                                        caregiver=caregiver,
-                                                        account=self.account))
-            self.cw.addWidget(self.caregiver_frames[-1])
-        self.grid.addWidget(self.cw, 1, 0)
+        
+        #Create the main frame
+        self.create_main_frame()
+        
+        #Create a frame that holds the memories
+        self.memory_frame = MemoryBrowse(account=self.account, parent=parent, window=self)
+        
+        #add the frames to the stacked widget
+        self.cw.addWidget(self.frame) #main frame = 0
+        self.cw.addWidget(self.memory_frame) #memory frame = 1
+        
+        self.grid.addWidget(self.cw)
+        self.cw.setCurrentIndex(0) #main frame
+        
+    def create_main_frame(self):
+        self.frame = QtGui.QFrame()
+        self.frame_grid = QtGui.QGridLayout()
         
         #Create a dropdown menu to change the screen of the current caregiver
         self.current_dropdown = QtGui.QComboBox(self)
         i = 0
-        for caregiver in account.get_caregivers():
+        for caregiver in self.account.get_caregivers():
             self.current_dropdown.insertItem(i, caregiver.get_name())
             i += 1
         self.current_dropdown.currentIndexChanged.connect(self.change_caregiver)   
         self.current_dropdown.setCurrentIndex(0)
-        
-        self.grid.addWidget(self.current_dropdown, 0, 0)
-        
-    def change_caregiver(self):
-        current_caregiver = self.current_dropdown.currentIndex()
-        self.cw.setCurrentWidget(self.caregiver_frames[current_caregiver])
-
-class CaregiverFrame(QtGui.QFrame):
-    
-    def __init__(self, height=0, width=0, parent=None, caregiver=None, account=None):
-        QtGui.QFrame.__init__(self, parent)
-        self.caregiver = caregiver #Caregiver object
-        self.account = account
-        
-        self.height = height
-        self.width = width
-        
-        self.resize(self.width, self.height)
-        
-        self.grid = QtGui.QGridLayout(self)
+        self.frame_grid.addWidget(self.current_dropdown, 0, 0)
         
         #Calendar
         self.cal = AvailabilityCalendar(account=self.account)
         self.cal.resize(self.width, self.height)
         self.cal.updateCells()
-        self.cal.selectionChanged.connect(self.show_schedule)
-        self.grid.addWidget(self.cal, 0, 0, 1, len(self.account.get_caregivers()))
+        #self.cal.selectionChanged.connect(self.show_schedule)
+        self.frame_grid.addWidget(self.cal, 1, 0, 1, len(self.account.get_caregivers()))
         
-        #Key to calendar
+        #Legend below calendar
         self.keys = []
         for i in range(len(self.account.get_colors())):
             l = QtGui.QLabel()
@@ -138,81 +156,35 @@ class CaregiverFrame(QtGui.QFrame):
             palette.setColor(QtGui.QPalette.Foreground, self.account.get_colors()[i])
             l.setPalette(palette)
             self.keys.append(l)
-            self.grid.addWidget(l, 1, i)
-            
-        #create a frame that has a memories and activities tab
-        self.create_memories_frame()
-        self.create_activities_frame()
-        self.create_browse_tab()
-        self.create_schedule_tab()
+            self.frame_grid.addWidget(l, 2, i)
         
-        self.tab = QtGui.QTabWidget()
-        self.tab.addTab(self.memories_tab, 'Add Memory')
-        self.tab.addTab(self.browse_tab, 'Browse Memories') ##### It doesn't seem like a good idea to have all these here, think of a way besides tabs
-        self.tab.addTab(self.activities_tab, 'Suggested Activities')
-        self.tab.addTab(self.schedule_tab, 'Scheduled Activities')
-        self.grid.addWidget(self.tab, 2, 0, 1, len(self.account.get_caregivers()))
+        #create a widget that to display different caregiver screens 
+        self.caregiver_frames = []
+        self.cf = QtGui.QStackedWidget()
+        for caregiver in self.account.get_caregivers():
+            self.caregiver_frames.append(caregiver.get_frame())
+            self.cf.addWidget(self.caregiver_frames[-1])
+        self.frame_grid.addWidget(self.cf, 3, 0, 1, len(self.account.get_caregivers()))
+
+        #Create a browse button to browse the memories
+        self.browse_button = QtGui.QPushButton('Browse Memories')
+        self.browse_button.clicked.connect(self.browse_memories)
+        self.frame_grid.addWidget(self.browse_button, 4, 0, 1, len(self.account.get_caregivers()))
         
-        self.setLayout(self.grid)
+        self.frame.setLayout(self.frame_grid)
     
-    def create_browse_tab(self):
-        self.browse_tab = QtGui.QFrame()
-        self.browse_grid = QtGui.QGridLayout()
+    def browse_memories(self):
+        self.cw.setCurrentIndex(1)
         
-        l = QtGui.QLabel()
-        l.setText('Browse Memories')
-        self.browse_grid.addWidget(l, 0, 0)        
+    def goto_home_screen(self):
+        self.cw.setCurrentIndex(0)
         
-        self.browse_tab.setLayout(self.browse_grid)
+    def change_caregiver(self):
+        current_caregiver = self.current_dropdown.currentIndex()
+        self.cf.setCurrentWidget(self.caregiver_frames[current_caregiver])
         
-    def create_schedule_tab(self):
-        self.schedule_tab = QtGui.QFrame()
-        self.schedule_grid = QtGui.QGridLayout()
-        
-        l = QtGui.QLabel()
-        l.setText('schedule')
-        self.schedule_grid.addWidget(l, 0, 0)        
-        
-        self.schedule_tab.setLayout(self.schedule_grid)
-    
-    def create_memories_frame(self):
-        self.memories_tab = QtGui.QFrame()
-        self.memories_grid = QtGui.QFormLayout()
-        
-        self.filename_entry = QtGui.QLineEdit()
-        self.memories_grid.addRow('Picture Filename', self.filename_entry)
-        
-        self.tags_entry = QtGui.QLineEdit()
-        self.memories_grid.addRow('Tagged People', self.tags_entry)
-        
-        self.title_entry = QtGui.QLineEdit()
-        self.memories_grid.addRow('Event Name', self.title_entry)
-        
-        self.datetime_entry = QtGui.QLineEdit()
-        self.memories_grid.addRow('Date and Time', self.datetime_entry)
-        
-        self.descr_entry = QtGui.QTextEdit()
-        self.memories_grid.addRow('Description', self.descr_entry)
-        
-        self.add_button = QtGui.QPushButton('Add Memory')
-        self.memories_grid.addRow(self.add_button)
-        
-        self.memories_tab.setLayout(self.memories_grid)
-        
-    def create_activities_frame(self):
-        self.activities_tab = QtGui.QFrame()
-        self.activities_grid = QtGui.QGridLayout()
-        
-        l = QtGui.QLabel()
-        l.setText('activities')
-        self.activities_grid.addWidget(l, 0, 0)
-        
-        self.activities_tab.setLayout(self.activities_grid)
-        
-    def show_schedule(self, date):
-        #look for scheduled activities for date
-        #change the tab widget
-        print 'show schedule'
+    def add_memory(self, memory):
+        self.memory_frame.add_element(memory)
         
 class AvailabilityCalendar(QtGui.QCalendarWidget):
     '''calendar that fills in each day with a color corresponding to caregivers availabilities'''
@@ -242,6 +214,116 @@ class AvailabilityCalendar(QtGui.QCalendarWidget):
                 color = self.color_list[self.account.get_caregivers().index(caregiver)]
                 
         return fill, color
+        
+class MemoryBrowse(QtGui.QFrame):
+    '''displays one widget from elements at a time. scroll through list with buttons'''
+    
+    def __init__(self, account=None, parent=None, window=None): 
+        QtGui.QFrame.__init__(self, parent)        
+        self.account = account
+        self.window = window #CaregiverWindow
+        
+        self.elements = []
+        for mem in self.account.get_memories():
+            self.elements.append(mem)
+        self.elements.reverse()
+        self.n = len(self.elements)       
+        
+        #Create the layout manager
+        self.grid = QtGui.QGridLayout()
+        
+        #The elements will be stored in a QStackedWidget so only one is available to view at a time
+        self.cw = QtGui.QStackedWidget()
+        for e in self.elements:
+            self.cw.addWidget(e.get_frame())
+        
+        #create a pointer of the currently displayed widget
+        self.current = 0
+        self.cw.setCurrentIndex(self.current)
+            
+        #Create the up and down buttons
+        self.left = QtGui.QPushButton('Previous')
+        self.left.clicked.connect(self.clicked_left)
+        
+        self.right = QtGui.QPushButton('Next')
+        self.right.clicked.connect(self.clicked_right)
+        
+        #add the widgets to the frame
+        self.grid.addWidget(self.cw, 0, 0, 1, 2)
+        self.grid.addWidget(self.left, 1, 0)
+        self.grid.addWidget(self.right, 1, 1)
+        
+        #Add the searching tools
+        self.search_layout = QtGui.QFormLayout()
+        
+        self.tags_search = QtGui.QComboBox()
+        self.tags_search.addItems(self.account.get_tags())
+        self.loc_search = QtGui.QComboBox()
+        self.loc_search.addItems(self.account.get_locations())
+        self.date_search = mywidgets.EntryAndCalendar()
+        self.search_button = QtGui.QPushButton('Search')
+        self.search_button.clicked.connect(self.search)
+        
+        self.search_layout.addRow('Tags', self.tags_search)
+        self.search_layout.addRow('Location', self.loc_search)
+        self.search_layout.addRow('Date', self.date_search)
+        self.search_layout.addRow(self.search_button)
+        
+        self.grid.addLayout(self.search_layout, 2, 0, 1, 2)
+        
+        #Return to home button
+        self.home_button = QtGui.QPushButton('Main Menu')
+        self.home_button.clicked.connect(self.window.goto_home_screen)
+        self.grid.addWidget(self.home_button, 3, 0)
+            
+        #Set the layout manager to the frame
+        self.setLayout(self.grid)
+    
+    def clicked_left(self):
+        '''the left button was clicked'''
+        if self.current <= 0: #you can't go up anymore
+            print 'no go up'
+        else:
+            self.current -= 1
+            self.cw.setCurrentIndex(self.current)
+            
+    def clicked_right(self):
+        '''the right button was clicked'''
+        if self.current >= self.n: #you can't go down anymore
+            print 'no go down'
+        else:
+            self.current += 1
+            self.cw.setCurrentIndex(self.current)
+            
+    def add_element(self, element):
+        '''add the element to the front of the list, set as current widget'''
+        self.elements.insert(0, element)
+        self.cw.insertWidget(0, element.get_frame())
+        
+        self.current = 0
+        self.cw.setCurrentIndex(self.current)
+        
+        #Uodate other things
+        self.tags_search.clear()
+        self.tags_search.addItems(self.account.get_tags())
+        self.loc_search.clear()
+        self.loc_search.addItems(self.account.get_locations())
+        
+    def search(self):
+        tag = self.tags_search.currentText()
+        loc = self.loc_search.currentText()
+        date = self.date_search.text()
+        
+        self.elements = self.account.search(tag=tag, loc=loc, date=date) #returns the memories in search order
+        
+        #remove all the widgets in the stack
+        for i in range(self.cw.count()):
+            widget = self.cw.widget(i)            
+            self.cw.removeWidget(widget)
+            
+        #add in the new order
+        for e in self.elements:
+            self.cw.addWidget(e.get_frame())
 
 if __name__ == "__main__":
 

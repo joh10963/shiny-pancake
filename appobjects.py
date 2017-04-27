@@ -6,13 +6,15 @@ Created on Tue Mar 28 10:32:03 2017
 """
 
 from PyQt4 import QtCore, QtGui
+import random
 
 class Instruction(object):
     ''' One step by step instruction'''
-    def __init__(self, title='', datetime='', location='', description='', parent=None):
+    def __init__(self, title='', date='', time='', location='', description='', parent=None):
         
         self.title = title
-        self.datetime = datetime
+        self.date = date
+        self.time = time
         self.location = location
         self.description = description
         
@@ -24,9 +26,9 @@ class Instruction(object):
         
         self.parent = parent
         
-        self.create_frame()
+        self.create_edit_frame()
         
-    def create_frame(self):
+    def create_display_frame(self):
         '''create a frame to display the instruction in the app'''
         self.frame = QtGui.QFrame(self.parent)
         self.frame.setFrameShape(QtGui.QFrame.StyledPanel)
@@ -59,15 +61,17 @@ class Instruction(object):
         self.descr_frame = QtGui.QFrame(self.frame)
         self.descr_frame_grid = QtGui.QFormLayout(self.descr_frame)
         
-        self.datetime_label = QtGui.QLabel(self.datetime, self.descr_frame)
-        self.datetime_label.setFont(self.small_font)
+        self.date_label = QtGui.QLabel(self.date, self.descr_frame)
+        self.date_label.setFont(self.small_font)
+        self.time_label = QtGui.QLabel(self.time, self.descr_frame)
+        self.time_label.setFont(self.small_font)
         self.location_label = QtGui.QLabel(self.location, self.descr_frame)
         self.location_label.setFont(self.small_font)
         self.descr_label = QtGui.QLabel(self.description, self.descr_frame)
         self.descr_label.setFont(self.small_font)
         self.descr_label.setWordWrap(True)
 
-        self.descr_frame_grid.addRow('Time: ', self.datetime_label)
+        self.descr_frame_grid.addRow('Time: ', self.time_label)
         self.descr_frame_grid.addRow('Location: ', self.location_label)
         self.descr_frame_grid.addRow(self.descr_label)
         
@@ -77,72 +81,143 @@ class Instruction(object):
         self.grid.addWidget(self.line, 1, 0)
         self.grid.addWidget(self.descr_frame, 2, 0)
         self.frame.setLayout(self.grid)
+        
+    def create_edit_frame(self):
+        '''create a frame with entry boxes so the user can edit things'''
+        self.edit_frame = QtGui.QFrame(self.parent)
+        self.edit_frame.setFrameShape(QtGui.QFrame.StyledPanel)
+        self.edit_frame.setFrameShadow(QtGui.QFrame.Raised)        
+        self.edit_frame.setAutoFillBackground(True) 
+        
+        self.edit_grid = QtGui.QFormLayout(self.edit_frame)
+        
+        self.title_entry = QtGui.QLineEdit()
+        self.time_entry = QtGui.QLineEdit()
+        self.loc_entry = QtGui.QLineEdit()
+        self.descr_entry = QtGui.QTextEdit()
+        
+        self.title_entry.setText(self.title)
+        self.time_entry.setText(self.time)
+        self.loc_entry.setText(self.location)
+        self.descr_entry.setText(self.description)
+        
+        self.edit_grid.addRow('Title', self.title_entry)
+        self.edit_grid.addRow('Time', self.time_entry)
+        self.edit_grid.addRow('Location', self.loc_entry)
+        self.edit_grid.addRow('Description', self.descr_entry)
+        
+        self.edit_frame.setLayout(self.edit_grid)
 
-    def get_frame(self):
+    def get_display_frame(self):
         return self.frame
+        
+    def get_edit_frame(self):
+        return self.edit_frame
         
     def resize_frame(self, width, height):
         self.width = width
         self.height = height
         self.frame.resize(self.width, self.height)
-        
-    def set_title(self, new_title):
-        self.title = new_title
-        self.title_label.setText(self.title)
-        
-    def set_datetime(self, new_datetime):
-        self.datetime = new_datetime
-        self.datetime_label.setText(self.datetime)
-        
-    def set_location(self, new_location):
-        self.location = new_location
-        self.location_label.setText(self.location)
-        
-    def set_description(self, new_description):
-        self.description = new_description
-        self.descr_label.setText(self.description)
-        
+     
     def get_title(self):
         return self.title
-    
-    def get_datetime(self):
-        return self.datetime
         
-    def get_location(self):
-        return self.location
+    def save(self):
+        #save all the entries to the variables
+        self.title = self.title_entry.text()
+        self.time = self.time_entry.text()
+        self.location = self.loc_entry.text()
+        self.description = self.descr_entry.toPlainText()
         
-    def get_description(self):
-        return self.description
+        self.create_display_frame()
+     
+#    def set_title(self, new_title):
+#        self.title = new_title
+#        self.title_label.setText(self.title)
+#        
+#    def set_datetime(self, new_datetime):
+#        self.datetime = new_datetime
+#        self.datetime_label.setText(self.datetime)
+#        
+#    def set_location(self, new_location):
+#        self.location = new_location
+#        self.location_label.setText(self.location)
+#        
+#    def set_description(self, new_description):
+#        self.description = new_description
+#        self.descr_label.setText(self.description)
+        
+#    def get_title(self):
+#        return self.title
+#    
+#    def get_datetime(self):
+#        return self.datetime
+#        
+#    def get_location(self):
+#        return self.location
+#        
+#    def get_description(self):
+#        return self.description
 
 class InstructionList(object):
     '''A list of the step-by-step instruction objects'''
-    def __init__(self, instructions=None, parent=None):
+    def __init__(self, instructions=[], parent=None):
         
         self.instructions = instructions
         self.current_instruction = 0 #keep track of the current instruction
         
         self.parent = parent
-        self.create_frame()
+        self.create_edit_frame()
         
-    def create_frame(self):
-        self.frame = QtGui.QFrame(self.parent)
+    def create_edit_frame(self):
+        self.frame = QtGui.QFrame()
         self.grid = QtGui.QGridLayout(self.frame)
         
         self.scroll_area = QtGui.QScrollArea(self.frame)
         self.scroll_area.setWidgetResizable(True)
         
         self.scroll_frame = QtGui.QFrame(self.scroll_area)
-        self.scroll_grid = QtGui.QGridLayout(self.scroll_frame)
+        self.scroll_grid = QtGui.QFormLayout(self.scroll_frame)
         
-        for i in range(len(self.instructions)): #THIS WILL NEED TO CHANGE IF NOT A LIST
+        self.question_entry = QtGui.QLineEdit()
+        self.scroll_grid.addRow('Question for patient', self.question_entry)
+        
+        for i in range(len(self.instructions)): 
             # Add the instruction frame to the self.frame
-            self.scroll_grid.addWidget(self.instructions[i].get_frame(), i, 0)
+            self.scroll_grid.addRow(self.instructions[i].get_edit_frame())
+            print 'added instruction: ' + str(i)
             
         self.scroll_frame.setLayout(self.scroll_grid)
         self.scroll_area.setWidget(self.scroll_frame)
         self.grid.addWidget(self.scroll_area, 0, 0)
+        
+        self.add_button = QtGui.QPushButton('Add Instruction') 
+        self.add_button.clicked.connect(self.add_instruction)
+        self.grid.addWidget(self.add_button, 1, 0)
             
         self.frame.setLayout(self.grid)
+        
+    def create_display_frame(self):
+        self.display_frame = QtGui.QFrame()
+        self.display_grid = QtGui.QFormLayout()
+        
+        for instruction in self.instructions:
+            self.display_grid.addRow(instruction.get_display_frame())
+        
+        self.display_frame.setLayout(self.display_grid)
+
+    def save(self):
+        self.question = self.question_entry.text()
+        for instruction in self.instructions:
+            instruction.save()
+        self.create_display_frame()
+    
+    def get_display_frame(self):
+        return self.display_frame
+   
+    def add_instruction(self):
+        self.instructions.append(Instruction())
+        self.scroll_grid.addRow(self.instructions[-1].get_edit_frame())
 
     def get_frame(self):
         return self.frame
@@ -154,12 +229,11 @@ class InstructionList(object):
             #instr.resize_frame(self.width, self.height/4)
         self.frame.resize(self.width, self.height)
     
+    def get_question(self):
+        return self.question
+    
     def get_instructions(self):
         return self.instructions
-    
-    def add_instruction(self, new_instruction, i=None):
-        '''add the instruction to the back of the list if no index i is given, otherwise add it to ith location'''
-        pass
     
     def delete_instruction(self, new_instruction, i=None):
         pass
@@ -170,41 +244,25 @@ class InstructionList(object):
         #   self.instructions[i].set_datetime(self.instructions[i].get_datetime() + time_delay)
         pass
 
-    def edit(self, i, new_title=None, new_datetime=None, new_location=None, new_description=None):
-        '''edit the ith instruction with the new data if it's given'''
-        # if new_title != None:
-        #   self.instructions[i].set_title(new_title)
-        # repeat with others
-        pass
-
     def accept(self):
         '''the current instruction has been completed, move on to the next one'''
         # self.current_instruction += 1 unless it's the last one
         pass
     
-    def get_datetime(self):
-        '''returns the datetime of the Instructions which would be the datetime of the first instruction?'''
-        if self.instructions == None:
-            return ''
-        return self.instructions[0].get_datetime()
-        
-    def get_location(self):
-        '''return the location which would be the location of the last instruction?'''
-        if self.instructions == None:
-            return ''
-        return self.instructions[-1].get_location()
     
         
 class Activity(object):
     
     def __init__(self, title='', description='', instruction_list=None, parent=None):
         
-        self.instruction_list = instruction_list  
+        self.instruction_list = instruction_list 
+        if self.instruction_list == None:
+            print 'creating new instruction list'
+            self.instruction_list = InstructionList()
+            #self.instruction_list.add_instruction()
         
         self.title = title
         self.description = description
-        self.datetime = self.instruction_list.get_datetime()
-        self.location = self.instruction_list.get_location()
         
         self.big_font = QtGui.QFont()
         self.big_font.setPointSize(36)  
@@ -221,16 +279,11 @@ class Activity(object):
         
         self.title_label = QtGui.QLabel(self.title)
         self.title_label.setFont(self.big_font)
-        self.datetime_label = QtGui.QLabel(self.datetime)
-        self.datetime_label.setFont(self.small_font)
         self.description_label = QtGui.QLabel(self.description)
         self.description_label.setFont(self.small_font)
         self.description_label.setWordWrap(True)
-    
-        self.grid.addWidget(self.title_label, 0, 0)
-        self.grid.addWidget(self.datetime_label, 1, 0)
-        self.grid.addWidget(self.description_label, 2, 0)        
-        self.grid.addWidget(self.instruction_list.get_frame(), 3, 0)
+          
+        self.grid.addWidget(self.instruction_list.get_frame(), 0, 0)
         
         self.frame.setLayout(self.grid)
         
@@ -242,6 +295,9 @@ class Activity(object):
         self.height = height
         #self.instruction_list.resize_frame(self.width, 3*self.height/4)
         self.frame.resize(self.width, self.height)
+
+    def save_instructions(self):
+        self.instruction_list.save()
         
     def get_instructions(self):
         return self.instruction_list.get_instructions()
@@ -249,18 +305,54 @@ class Activity(object):
     def get_instruction_list(self):
         return self.instruction_list
         
+    def get_title(self):
+        return self.title
+        
+    def get_question(self):
+        return self.instruction_list.get_question()
+        
 
 class ActivitiesList(object):
     '''manages all the activities'''
-    pass
+    def __init__(self, activities=[]):
+        self.activities = activities #list of activity objects
         
+        if len(self.activities) < 1:
+            #create some defaults info
+            self.activities.append(Activity(title='Cool Activity', description='descritiotn'))
+            self.activities.append(Activity(title='Another Cool Activity', description='descritiotn'))
+            self.activities.append(Activity(title='The other Cool Activity', description='descritiotn'))
+            self.activities.append(Activity(title='This Activity', description='descritiotn'))
+            self.activities.append(Activity(title='That Activity', description='descritiotn'))
+            self.activities.append(Activity(title='The Activity', description='descritiotn'))
+            
+        print self.activities[0].get_instruction_list()
+        print self.activities[1].get_instruction_list()
+        print self.activities[2].get_instruction_list()
+        print self.activities[3].get_instruction_list()
+        print self.activities[4].get_instruction_list()
+        print self.activities[5].get_instruction_list()
+        
+
+    def accepted(self, activity):
+        '''tell the neural network that you accepted the activity'''
+        pass
+            
+    def get_activities(self):
+        return self.activities
+        
+    def suggest_activity(self):
+        i = random.randint(0, len(self.activities)-1)
+        return self.activities[i]
+                
 class Memory(object):
     
-    def __init__(self, title='', datetime='', descr='', tagged_people='', pic_filename='', parent=None):
+    def __init__(self, title='', datetime='', loc='', descr='', tags=[], pic_filename='', parent=None):
         
         self.title = title
         self.datetime = datetime
-        self.tagged_people = tagged_people
+        self.location = loc
+        self.tags = tags
         self.pic_filename = pic_filename
         self.descr = descr
         
@@ -291,7 +383,14 @@ class Memory(object):
         self.datetime_label = QtGui.QLabel(self.datetime, self.frame)
         self.datetime_label.setFont(big_font)
         
-        self.tags_label = QtGui.QLabel(self.tagged_people, self.frame) ############These need to be clickable labels
+        self.location_label = QtGui.QLabel(self.location, self.frame)
+        self.location_label.setFont(big_font)
+        
+        line = ''
+        for tag in self.tags:
+            line += tag + ', '
+        line = line[0:-2]
+        self.tags_label = QtGui.QLabel(line, self.frame) 
         self.tags_label.setFont(big_font)
         
         #Add the description
@@ -303,8 +402,9 @@ class Memory(object):
         self.grid.addWidget(self.pic, 0, 0) 
         self.grid.addWidget(self.tags_label, 1, 0)
         self.grid.addWidget(self.title_label, 2, 0)
-        self.grid.addWidget(self.datetime_label, 3, 0)
-        self.grid.addWidget(self.descr_label, 4, 0)
+        self.grid.addWidget(self.location_label, 3, 0)
+        self.grid.addWidget(self.datetime_label, 4, 0)
+        self.grid.addWidget(self.descr_label, 5, 0)
         
         self.frame.setLayout(self.grid) 
     
@@ -318,8 +418,18 @@ class Memory(object):
         self.pic.setPixmap(self.pixmap)
         self.frame.resize(self.width, self.height)
         
+    def get_tags(self):
+        return self.tags
+        
+    def get_location(self):
+        return self.location
+        
+    def get_date(self):
+        return self.datetime
+        
         
 if __name__ == "__main__":
+
     import sys, os    
 
     app = QtGui.QApplication(sys.argv)
@@ -332,23 +442,33 @@ if __name__ == "__main__":
     
     for i in range(len(instructions)):
         instructions[i] = Instruction('Instruction ' + str(i), '12:24', 'My House', 'fd jfkkdfjv mvm vklxklds v nvnvjkdnvjf n fnds vnks nvjk snvjk nnjjsnvjd')
-        instructions[i].resize_frame(width, height/6)
+        #instructions[i].resize_frame(width, height/6)
         
     instruction_list = InstructionList(instructions)
-    instruction_list.resize_frame(width, 3*height/4)
     
-    act = Activity('Activity 1', 'fnnnckk ckkkdc djjd kkd', instruction_list)
-    act.resize_frame(width, height)
+    act = Activity(title='ancjlndlksv', instruction_list=instruction_list)
     act.get_frame().show()
     
-    a = 'Name of Event'
-    b = 'Saturday, April 1'
-    c = 'Description bvdjnsv vkmdsvd dvmlsdmvkd mvdk  vdk siiisv llsf nndsln v'
-    d = 'Person1, Person2, Person3'
-    e = 'dog.png'
-    mem =  Memory(title=a, datetime=b, descr=c, tagged_people=d, pic_filename=e)
-    mem.resize_frame(width, height/2)
-    mem.get_frame().show()    
+    act.save_instructions()
+    
+    #create a new activity
+    act2 = Activity(title='fdfdsfdsfd')
+    act2.get_frame().show()
+
+    
+#    act = Activity('Activity 1', 'fnnnckk ckkkdc djjd kkd', instruction_list)
+#    act.resize_frame(width, height)
+#    act.get_frame().show()
+#    
+#    a = 'Name of Event'
+#    b = 'Saturday, April 1'
+#    c = 'Description bvdjnsv vkmdsvd dvmlsdmvkd mvdk  vdk siiisv llsf nndsln v'
+#    d = 'Person1, Person2, Person3'
+#    e = 'dog.png'
+#    loc = 'locations'
+#    mem =  Memory(title=a, loc=loc, datetime=b, descr=c, tags=d, pic_filename=e)
+#    mem.resize_frame(width, height/2)
+#    mem.get_frame().show()    
     
     sys.exit(app.exec_())     
 
