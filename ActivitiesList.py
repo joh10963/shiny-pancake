@@ -5,7 +5,11 @@ Created on Wed Apr 26 14:44:45 2017
 @author: diana
 """
 from PyQt4 import QtCore, QtGui
+
 from Activity import Activity
+from Instruction import Instruction
+from InstructionList import InstructionList
+
 import random
 
 class ActivitiesList(QtGui.QWidget):
@@ -20,12 +24,37 @@ class ActivitiesList(QtGui.QWidget):
         
         if len(self.activities) < 1:
             #create some defaults info
-            self.activities.append(Activity(title='Cool Activity', index=0))
-            self.activities.append(Activity(title='Another Cool Activity', index=1))
-            self.activities.append(Activity(title='The other Cool Activity', index=2))
-            self.activities.append(Activity(title='This Activity', index=3))
-            self.activities.append(Activity(title='That Activity', index=4))
-            self.activities.append(Activity(title='The Activity', index=5))
+            instructions1 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+            instructionlist1 = InstructionList(instructions=instructions1)
+            instructions2 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+            instructionlist2 = InstructionList(instructions=instructions2)
+            instructions3 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+            instructionlist3 = InstructionList(instructions=instructions3)
+            instructions4 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+            instructionlist4 = InstructionList(instructions=instructions4)
+            instructions5 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+            instructionlist5 = InstructionList(instructions=instructions5)
+            instructions6 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+            instructionlist6 = InstructionList(instructions=instructions6)
+        
+            self.activities.append(Activity(title='Cool Activity', index=0, instruction_list=instructionlist1))
+            self.activities.append(Activity(title='Another Cool Activity', index=1, instruction_list=instructionlist2))
+            self.activities.append(Activity(title='The other Cool Activity', index=2, instruction_list=instructionlist3))
+            self.activities.append(Activity(title='This Activity', index=3, instruction_list=instructionlist4))
+            self.activities.append(Activity(title='That Activity', index=4, instruction_list=instructionlist5))
+            self.activities.append(Activity(title='The Activity', index=5, instruction_list=instructionlist6))
             
         for activity in self.activities:
             activity.accepted.connect(self.ask_patient)
@@ -34,11 +63,12 @@ class ActivitiesList(QtGui.QWidget):
         '''this gets called once the caregivers accept/decline activity'''
         print 'ask patient of activities list'
         if boolean:
-            self.account.send_to_patient(self.activities[index])
+            if self.account.check_activity(self.activities[index]): #if the times are correct
+                self.account.send_to_patient(self.activities[index])
         else:
             print 'the caregiver no want to do update algorithm'
         self.account.suggest_activity(self.get_activity())
-        print 'done'
+        print 'suggested'
             
     def get_activities(self):
         return self.activities
@@ -58,7 +88,7 @@ if __name__ == "__main__":
     height = screenShape.height() - 80   
     
     actList = ActivitiesList()
-    act = actList.suggest_activity()
+    act = actList.get_activity()
     act.show()
     
     sys.exit(app.exec_())

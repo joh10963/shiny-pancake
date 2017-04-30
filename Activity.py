@@ -51,6 +51,12 @@ class Activity(QtGui.QWidget):
         if self.instruction_list.check_times():
             self.accepted.emit(True, self.index)
         else:
+            msg = QtGui.QMessageBox()
+            msg.setIcon(QtGui.QMessageBox.Warning)
+            msg.setText("This activity cannot be sent because the times are not consecutive")
+            msg.setWindowTitle("Scheduling Error")
+            msg.setStandardButtons(QtGui.QMessageBox.Ok)
+            msg.exec_()
             print 'the times are not consecutive'
 
     def decline_activity(self):
@@ -74,17 +80,28 @@ class Activity(QtGui.QWidget):
     def get_scheduled_reminders(self):
         return self.instruction_list.get_schedule()
         
+    def set_times(self, t):
+        self.instruction_list.set_times(t)
+        
 if __name__ == "__main__":
     import os
     import sys
-
+    from Instruction import Instruction
+    
     app = QtGui.QApplication(sys.argv)
     
     screenShape = QtGui.QDesktopWidget().screenGeometry()
     width = screenShape.width()/3
-    height = screenShape.height() - 80   
+    height = screenShape.height() - 80 
     
-    act = Activity(title='GOing to the mall')
+    instructions1 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+    iList = InstructionList(instructions=instructions1)
+
+    act = Activity(title='GOing to the mall', instruction_list=iList)
+    act.set_times(20)
     act.show()
+    
     
     sys.exit(app.exec_())

@@ -10,6 +10,10 @@ import mywidgets
 
 class Instruction(QtGui.QWidget):
     ''' One step by step instruction'''
+
+    completed = QtCore.pyqtSignal()  
+    canceled = QtCore.pyqtSignal()
+    
     def __init__(self, title='', date=None, time=None, location='', description='', parent=None):
         QtGui.QWidget.__init__(self, parent)
         
@@ -55,7 +59,26 @@ class Instruction(QtGui.QWidget):
         self.grid.addRow('Location:', self.loc_label)
         self.grid.addRow('Description:', self.descr_label)
         
+        #create the yes and no buttons
+        self.completed_button = QtGui.QPushButton('Completed')
+        self.completed_button.clicked.connect(self.completed_instruction)
+        self.cancel_button = QtGui.QPushButton('Cancel Activity')
+        self.cancel_button.clicked.connect(self.canceled_instruction)
+        
+        self.g = QtGui.QGridLayout()
+        self.g.addWidget(self.completed_button, 0, 0)
+        self.g.addWidget(self.cancel_button, 0, 1)
+        
+        self.grid.addRow(self.g)
+        
         self.frame.setLayout(self.grid)
+    def completed_instruction(self):
+        '''send out a signal when the completed button is pressed'''
+        self.completed.emit()
+        
+    def canceled_instruction(self):
+        '''send out a signal when the completed button is pressed'''
+        self.canceled.emit()
         
     def create_edit_frame(self):
         '''create a frame with entry boxes so the user can edit things'''
@@ -101,7 +124,13 @@ class Instruction(QtGui.QWidget):
         self.date_label.setText(self.date_entry.toString())
         self.loc_label.setText(self.loc_entry.text())
         self.descr_label.setText(self.descr_entry.toPlainText())
-
+        
+    def set_time(self, time):
+        self.time_entry.setText(time)
+        
+    def set_date(self, date):
+        self.date_entry.setDate(date)
+        
     def get_display_frame(self):
         return self.frame
         

@@ -87,7 +87,7 @@ class ChooseDate(QtGui.QGridLayout):
         self.button = QtGui.QPushButton('Browse Dates')
         self.calendar = QtGui.QCalendarWidget()
         self.calendar.setGeometry(self.button.x(), self.button.y(), 300, 300)
-        self.calendar.selectionChanged.connect(self.select_date)
+        self.calendar.clicked.connect(self.select_date)
         
         self.addWidget(self.label, 0, 0)
         self.addWidget(self.button, 0, 1)
@@ -103,6 +103,11 @@ class ChooseDate(QtGui.QGridLayout):
     def select_date(self):
         self.calendar.hide()
         self.date = self.calendar.selectedDate()
+        self.label.setText(self.date.toString())
+        self.dateChanged.emit()
+        
+    def setDate(self, date):
+        self.date = date
         self.label.setText(self.date.toString())
         self.dateChanged.emit()
         
@@ -133,6 +138,7 @@ class ChooseTime(QtGui.QGridLayout): ###########make it curcle around, start at 
 
         self.hour = QtGui.QSpinBox()
         self.minute = QtGui.QSpinBox()
+        self.second = QtGui.QSpinBox()
         self.ampm = QtGui.QComboBox()
         self.label = QtGui.QLabel(':')
         
@@ -142,6 +148,9 @@ class ChooseTime(QtGui.QGridLayout): ###########make it curcle around, start at 
         self.minute.setRange(0, 59)
         self.minute.setValue(0)
         self.minute.valueChanged.connect(self.changed)
+        self.second.setRange(0, 59)
+        self.second.setValue(0)
+        self.second.valueChanged.connect(self.changed)
         self.ampm.addItem('AM')
         self.ampm.addItem('PM')
         self.ampm.currentIndexChanged.connect(self.changed)
@@ -149,7 +158,8 @@ class ChooseTime(QtGui.QGridLayout): ###########make it curcle around, start at 
         self.addWidget(self.hour, 0, 0)
         self.addWidget(self.label, 0, 1)
         self.addWidget(self.minute, 0, 2)
-        self.addWidget(self.ampm, 0, 3)
+        self.addWidget(self.second, 0, 3)
+        self.addWidget(self.ampm, 0, 4)
         
         if time != None:
             self.setText(time)
@@ -165,17 +175,19 @@ class ChooseTime(QtGui.QGridLayout): ###########make it curcle around, start at 
         else:
             self.hour.setValue(time.hour())
         self.minute.setValue(time.minute())
+        self.second.setValue(time.second())
         
     def time(self):
         '''return a QTime object'''
         hour = self.hour.value()
         minute = self.minute.value()
+        second = self.second.value()
         ampm = self.ampm.currentText()
         
         if ampm == 'PM':
             hour = hour + 12
             
-        return QtCore.QTime(hour, minute)
+        return QtCore.QTime(hour, minute, second)
         
     def toString(self):
         time = self.time()
@@ -223,10 +235,9 @@ class BaseFrame(QtGui.QFrame):
         self.gridV = QtGui.QVBoxLayout()
         self.gridV.addLayout(self.gridHd)
         self.gridV.addLayout(self.gridHt)
-        #self.gridV.addStretch(1)
         
         self.frame = QtGui.QFrame()
-        self.frame.resize(self.width, self.height-150)
+        self.frame.resize(self.width, self.height)
         self.frame.setFrameShape(QtGui.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtGui.QFrame.Raised)
         self.frame.setContentsMargins(0, 0, 0, 0)
@@ -234,7 +245,7 @@ class BaseFrame(QtGui.QFrame):
         self.frame.setLayout(self.grid)
         
         self.gridV.addWidget(self.frame)
-        self.gridV.addStretch(1)
+        #self.gridV.addStretch(10)
     
         self.setLayout(self.gridV)
         

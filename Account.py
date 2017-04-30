@@ -5,12 +5,15 @@ Created on Wed Apr 26 19:03:41 2017
 @author: diana
 """
 from PyQt4 import QtCore, QtGui
+
 from ActivitiesList import ActivitiesList
 from Memory import Memory
 from Caregiver import Caregiver
+from Patient import Patient
+
 import mywidgets
 import random
-from collections import deque
+
 
 class Account(object):
     
@@ -49,6 +52,7 @@ class Account(object):
         self.colors = []
         for caregiver in self.caregivers:
             self.colors.append(QtGui.QColor(random.randint(0,255), random.randint(0,255), random.randint(0,255), 150))
+            caregiver.browseClicked.connect(self.open_browse_memories)
         
         #create the screens
         self.create_caregiver_screen()
@@ -61,29 +65,11 @@ class Account(object):
         self.caregiver_screen = mywidgets.BaseFrame(width=self.width, height=self.height)    
         self.caregiver_screen.grid.addLayout(self.cw, 0, 0)
         
-        #patient screen flags - so we know what is displayed (only display 1 thing at a time)
-        self.started = False #flag for patient yes/no question  
-        self.is_during_activity = False #set to true when started and false when finished
-        
-        self.activity_queue = deque() #this is the activities that the patient sees
-        self.current_activity = None
-        self.patient_screen = mywidgets.BaseFrame(width=self.width, height=self.height)
-        self.question_frame = QtGui.QFrame()
-        self.question_layout = QtGui.QGridLayout()
-        self.question_frame.setLayout(self.question_layout)
-        self.question_label = QtGui.QLabel()
-        self.accept_button = QtGui.QPushButton('Yes')
-        self.accept_button.clicked.connect(self.patient_accepted_activity)
-        self.decline_button = QtGui.QPushButton('No')
-        self.decline_button.clicked.connect(self.patient_declined_activity)
-        self.question_layout.addWidget(self.question_label, 0, 0, 1, 2)
-        self.question_layout.addWidget(self.accept_button, 1, 0)
-        self.question_layout.addWidget(self.decline_button, 1, 1)
-        self.patient_screen.grid.addWidget(self.question_frame, 0, 0)
-        self.question_frame.hide()
-        
         #suggest an activity
         self.caregivers[self.current_caregiver()].suggest_activity(self.activities_list.get_activity())
+        
+        #create the patient
+        self.patient = Patient(width=self.width, height=self.height, account=self)
         
         #create a timer to check on things
         self.timer = QtCore.QTimer()
@@ -110,20 +96,20 @@ class Account(object):
             i += 1
         self.current_dropdown.currentIndexChanged.connect(self.change_caregiver)   
         self.current_dropdown.setCurrentIndex(0)
-        self.cs_grid.addWidget(self.current_dropdown, 0, 0)        
+        #self.cs_grid.addWidget(self.current_dropdown, 0, 0)        
         
         self.calendar = mywidgets.AvailabilityCalendar(caregivers=self.caregivers, colors=self.colors)
         self.cs_grid.addLayout(self.calendar, 1, 0)
-        
-        self.browse_button = QtGui.QPushButton('Browse Memories')
-        self.browse_button.clicked.connect(self.open_browse_memories)
-        self.cs_grid.addWidget(self.browse_button, 2, 0)
 
         self.cf = QtGui.QStackedWidget()
         for caregiver in self.caregivers:
             self.cf.addWidget(caregiver)
         self.cs_grid.addWidget(self.cf, 3, 0)
-    
+        
+    def check_activity(self, activity):
+        '''check if the activity has consecutive times and if it's not overlapping another scheduled activity'''
+        return True
+        
     def suggest_activity(self, activity):
         #This shouldn't just be the current caregiver but based on availability
         self.caregivers[self.current_caregiver()].suggest_activity(activity)
@@ -132,6 +118,7 @@ class Account(object):
         return self.current_dropdown.currentIndex()
         
     def open_browse_memories(self):
+        print 'open browse memories'
         self.cw.setCurrentWidget(self.memory_browse)
         
     def goto_home_screen(self):
@@ -142,42 +129,7 @@ class Account(object):
         self.cf.setCurrentWidget(self.caregivers[current_caregiver])
         
     def send_to_patient(self, activity):
-        #push the activity onto the queue
-        self.activity_queue.append(activity)
-        if not self.started: #This is the first activity sent to them
-            #pop the first on off
-            self.question_frame.show()
-            act = self.activity_queue.popleft()
-            self.question_label.setText(act.get_question())
-            self.current_activity = act
-            self.started = True
-        
-    def patient_accepted_activity(self):
-        if self.current_activity != None:
-            print 'start schedule'
-            instructions, times = self.current_activity.get_scheduled_reminders()
-            print instructions
-            print times
-            print 'end schedule'
-        if len(self.activity_queue) > 0:
-            act = self.activity_queue.popleft()
-            self.question_label.setText(act.get_question())
-            self.current_activity = act
-        else:
-            self.question_frame.hide()
-            self.started = False #we ran out of activities to send to the patient
-            self.current_activity = None
-            
-    def patient_declined_activity(self):
-        print 'patient declined activity tell the algorithm'
-        if len(self.activity_queue) > 0:
-            act = self.activity_queue.popleft()
-            self.question_label.setText(act.get_question())
-            self.current_activity = act
-        else:
-            self.question_frame.hide()
-            self.started = False #we ran out of activities to send to the patient
-            self.current_activity = None
+        self.patient.send(activity)
     
     def get_caregivers(self):
         return self.caregivers
@@ -244,7 +196,7 @@ class Account(object):
     def run(self):
         #show the screens
         self.caregiver_screen.show()
-        self.patient_screen.show()
+        self.patient.show()
         
 if __name__ == "__main__":
     import sys

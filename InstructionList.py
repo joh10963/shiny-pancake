@@ -43,18 +43,22 @@ class InstructionList(QtGui.QWidget):
         self.grid2.addWidget(self.add_button, 0, 0)
         self.grid2.addWidget(self.delete_button, 0, 1)
         self.grid.addRow(self.grid2)
-        
-        self.doo_but = QtGui.QPushButton('doo')
-        self.doo_but.clicked.connect(self.doo)
-        self.grid.addRow(self.doo_but)
             
         self.setLayout(self.grid)
-    
-    def doo(self):
-        instructs, time = self.get_schedule()
-        print instructs
-        print time
-    
+        
+    def set_times(self, t):
+        '''set the first instruction to be the current time+30s and then each instruction after is t seconds'''
+        if len(self.instructions) > 0:
+            current_date = QtCore.QDate.currentDate()
+            current_time = QtCore.QTime.currentTime()
+            current_time = current_time.addSecs(30)
+            self.instructions[0].set_time(current_time)
+            self.instructions[0].set_date(current_date)
+            for i in range(1, len(self.instructions)):
+                current_time = current_time.addSecs(t)
+                self.instructions[i].set_time(current_time)
+                self.instructions[i].set_date(current_date)
+            
     def get_display_frame(self):
         return self.display_frame
    
@@ -129,8 +133,12 @@ if __name__ == "__main__":
     width = screenShape.width()/3
     height = screenShape.height() - 80   
     
-    iList = InstructionList()
+    instructions1 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+    iList = InstructionList(instructions=instructions1)
     iList.show()
+    iList.set_times(20)
     
     sys.exit(app.exec_())
     

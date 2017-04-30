@@ -10,6 +10,8 @@ from Memory import Memory
 
 class Caregiver(QtGui.QWidget):
     
+    browseClicked = QtCore.pyqtSignal()    
+    
     def __init__(self, name='', availability=[0, 0, 0, 0, 0, 0, 0], account=None, parent=None, width=400, height=450):
         QtGui.QWidget.__init__(self, parent=None)
         
@@ -64,9 +66,20 @@ class Caregiver(QtGui.QWidget):
         
         self.add_button = QtGui.QPushButton('Add Memory')
         self.add_button.clicked.connect(self.add_memory)
-        self.memories_grid.addRow(self.add_button)
+        
+        self.browse_button = QtGui.QPushButton('View All Memories')
+        self.browse_button.clicked.connect(self.send_signal)
+        
+        self.g = QtGui.QGridLayout()
+        self.g.addWidget(self.add_button, 0, 0)
+        self.g.addWidget(self.browse_button, 0, 1)
+        self.memories_grid.addRow(self.g)
         
         self.memories_tab.setLayout(self.memories_grid)
+        
+    def send_signal(self):
+        '''emit the signal that the browse button was clicked'''
+        self.browseClicked.emit()
         
     def create_activities_tab(self):
         self.activities_tab = QtGui.QFrame()
@@ -75,21 +88,7 @@ class Caregiver(QtGui.QWidget):
         self.activities_grid = QtGui.QStackedLayout()
         
         self.activities_tab.setLayout(self.activities_grid)
-        
-#    def accept_activity(self):
-#        #Tell self.account that you accepted 
-#        self.account.caregiver_accepted_activity(self.current_activity)
-#        
-#        #replace with another question
-#        self.suggest_activity(self.account.get_random_activity())
-#        
-#    def decline_activity(self):
-#        #Tell self.account that you accepted 
-#        self.account.caregiver_declined_activity(self.current_activity)
-#        
-#        #replace with another question
-#        self.suggest_activity(self.account.get_random_activity())
-#       
+   
     def add_memory(self):
         #get all the info from the text_boxes
         filename = self.filename_entry.text()
@@ -119,7 +118,9 @@ class Caregiver(QtGui.QWidget):
         return self.availability
 
     def suggest_activity(self, activity):
-        cur = self.activities_grid.addWidget(activity) #it's okay to add the widget again, it won't double count
+        self.current_activity = activity
+        self.current_activity.set_times(20)
+        cur = self.activities_grid.addWidget(self.current_activity) #it's okay to add the widget again, it won't double count
         print self.activities_grid.count()        
         self.activities_grid.setCurrentIndex(cur)
         
@@ -135,7 +136,9 @@ if __name__ == "__main__":
     height = screenShape.height() - 80  
     
     actList = ActivitiesList()
-    act = actList.suggest_activity()
+    act = actList.get_activity()
+    act.set_times(20)
+    act.show()
 
     diana = Caregiver(name='Diana', availability=[0, 1, 0, 0, 1, 0, 0])
     diana.suggest_activity(act)
