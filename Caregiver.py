@@ -11,9 +11,11 @@ from Memory import Memory
 class Caregiver(QtGui.QWidget):
     
     browseClicked = QtCore.pyqtSignal()    
+    availabilityChanged = QtCore.pyqtSignal()
     
-    def __init__(self, name='', availability=[0, 0, 0, 0, 0, 0, 0], account=None, parent=None, width=400, height=450):
+    def __init__(self, name='', availability=[0, 0, 0, 0, 0, 0, 0], account=None, parent=None, width=400, height=475):
         QtGui.QWidget.__init__(self, parent=None)
+        self.setContentsMargins(0, 0, 0, 0)
         
         self.name = name
         self.availability = availability #[Su, M, Tu, W, Th, Fr, Sat] 0 if not available, 1 if available
@@ -35,10 +37,27 @@ class Caregiver(QtGui.QWidget):
         self.tab.setContentsMargins(0, 0, 0, 0)
         self.tab.addTab(self.memories_tab, 'Memory')
         self.tab.addTab(self.activities_tab, 'Activities')
-        self.grid.addWidget(self.tab, 0, 0)
+        self.grid.addWidget(self.tab, 1, 0, 1, 7)
         
+        #create some radiobuttons
+        labs = ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa']
+        self.radiobuts = []
+        for i in range(len(self.availability)):
+            but = QtGui.QCheckBox(labs[i])
+            self.radiobuts.append(but)
+            but.stateChanged.connect(lambda event, index=i:self.availability_changed(index))
+            self.grid.addWidget(but, 0, i)
+            if self.availability[i]:
+                but.setChecked(True)
+
         self.setLayout(self.grid)
-    
+        
+    def availability_changed(self, index):
+        #update the availability
+        self.availability[index] = int(self.radiobuts[index].isChecked())
+        self.availabilityChanged.emit()
+        print 'done'
+
     def create_memories_tab(self):
         self.memories_tab = QtGui.QFrame()
         self.memories_tab.setMaximumSize(self.width, self.height)

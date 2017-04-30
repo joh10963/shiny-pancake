@@ -21,8 +21,8 @@ class Account(object):
         self.filename = filename   
         
         screenShape = QtGui.QDesktopWidget().screenGeometry()
-        self.width = screenShape.width()/3
-        self.height = screenShape.height() - 100  
+        self.width = screenShape.width()/3 + 100
+        self.height = screenShape.height() - 100
         
         #Create the activities before creating the caregivers
         self.activities_list = ActivitiesList(account=self)
@@ -53,6 +53,7 @@ class Account(object):
         for caregiver in self.caregivers:
             self.colors.append(QtGui.QColor(random.randint(0,255), random.randint(0,255), random.randint(0,255), 150))
             caregiver.browseClicked.connect(self.open_browse_memories)
+            caregiver.availabilityChanged.connect(self.update_calendar)
         
         #create the screens
         self.create_caregiver_screen()
@@ -62,7 +63,7 @@ class Account(object):
         self.cw.addWidget(self.cs)
         self.cw.addWidget(self.memory_browse)
         
-        self.caregiver_screen = mywidgets.BaseFrame(width=self.width, height=self.height)    
+        self.caregiver_screen = mywidgets.BaseFrame(width=self.width, height=self.height+100)    
         self.caregiver_screen.grid.addLayout(self.cw, 0, 0)
         
         #suggest an activity
@@ -71,16 +72,9 @@ class Account(object):
         #create the patient
         self.patient = Patient(width=self.width, height=self.height, account=self)
         
-        #create a timer to check on things
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.do_checks)
-        #self.timer.start()
+    def update_calendar(self):
+        self.calendar.update()        
         
-    def do_checks(self):
-        print 'do checks'
-        #Check to make sure that 
-
     def create_caregiver_screen(self):
         
         self.cs = QtGui.QWidget()
@@ -99,12 +93,12 @@ class Account(object):
         #self.cs_grid.addWidget(self.current_dropdown, 0, 0)        
         
         self.calendar = mywidgets.AvailabilityCalendar(caregivers=self.caregivers, colors=self.colors)
-        self.cs_grid.addLayout(self.calendar, 1, 0)
+        self.cs_grid.addLayout(self.calendar, 0, 0)
 
         self.cf = QtGui.QStackedWidget()
         for caregiver in self.caregivers:
             self.cf.addWidget(caregiver)
-        self.cs_grid.addWidget(self.cf, 3, 0)
+        self.cs_grid.addWidget(self.cf, 1, 0)
         
     def check_activity(self, activity):
         '''check if the activity has consecutive times and if it's not overlapping another scheduled activity'''
@@ -118,7 +112,6 @@ class Account(object):
         return self.current_dropdown.currentIndex()
         
     def open_browse_memories(self):
-        print 'open browse memories'
         self.cw.setCurrentWidget(self.memory_browse)
         
     def goto_home_screen(self):

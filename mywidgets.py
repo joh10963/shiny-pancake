@@ -210,11 +210,20 @@ class BaseFrame(QtGui.QFrame):
     '''Creates a Frame widget that displays the current date and time'''
     def __init__(self, width=0, height=0, parent=None):
         QtGui.QFrame.__init__(self, parent)
-        self.setContentsMargins(0, 0, 0, 0)
+        self.master_grid = QtGui.QVBoxLayout()
 
         self.width = width
         self.height = height
         self.resize(self.width, self.height) 
+        
+        self.screen = QtGui.QFrame()
+        self.screen.resize(self.width, self.height)
+        #self.screen.setGeometry(self.width-120, self.height-120, self.width-240, self.height-240)
+        self.screen.setFrameShape(QtGui.QFrame.Panel)
+        self.screen.setFrameShadow(QtGui.QFrame.Plain)
+        self.screen.setLineWidth(5)
+        self.screen.setContentsMargins(30, 40, 30, 30)
+        #self.screen.setContentsMargins(0, 0, 0, 0)
         
         self.time_label = QtGui.QLabel('Time', self)
         self.time_label.setFont(font_24)
@@ -237,17 +246,16 @@ class BaseFrame(QtGui.QFrame):
         self.gridV.addLayout(self.gridHt)
         
         self.frame = QtGui.QFrame()
-        self.frame.resize(self.width, self.height)
-        self.frame.setFrameShape(QtGui.QFrame.StyledPanel)
-        self.frame.setFrameShadow(QtGui.QFrame.Raised)
-        self.frame.setContentsMargins(0, 0, 0, 0)
         self.grid = QtGui.QGridLayout()
         self.frame.setLayout(self.grid)
         
         self.gridV.addWidget(self.frame)
-        #self.gridV.addStretch(10)
     
-        self.setLayout(self.gridV)
+        self.screen.setLayout(self.gridV)
+        
+        self.master_grid.addWidget(self.screen)
+        self.setLayout(self.master_grid)
+        
         
         #Set a timer to update the date and time periodically
         self.timer = QtCore.QTimer(self)
@@ -260,10 +268,33 @@ class BaseFrame(QtGui.QFrame):
         self.time_label.setText(QtCore.QDateTime.currentDateTime().time().toString())
         self.date_label.setText(QtCore.QDateTime.currentDateTime().date().toString())
         
+    def paintEvent(self, event):
+        qp = QtGui.QPainter()
+        qp.begin(self)
+        
+        #draw the outside
+        qp.setPen(QtGui.QColor(QtCore.Qt.black))
+        qp.drawRoundRect(10, 10, self.width-20, self.height-15, 15, 15)
+        
+        #draw the line on top
+        qp.drawRect(self.width/2-20, 30, 40, 10)
+        
+        #draw the circle on the bottom
+        qp.drawEllipse(self.width/2-20, self.height-50, 40, 40)
+        		
+        qp.end()
+        
 class Calendar(QtGui.QCalendarWidget):
     '''calendar that fills in each day with a color corresponding to caregivers availabilities'''
-    def __init__(self, parent=None, caregivers=None, colors=None):
+    def __init__(self, parent=None, caregivers=None, colors=None, width=400, height=475):
         QtGui.QCalendarWidget.__init__(self, parent)
+        
+        self.setNavigationBarVisible(False)
+        self.setHorizontalHeaderFormat(QtGui.QCalendarWidget.SingleLetterDayNames)
+        
+        self.width = width
+        self.height = height
+        self.setMaximumSize(self.width, self.height)
         
         self.caregiver_list = caregivers
         self.color_list = colors
@@ -310,6 +341,9 @@ class AvailabilityCalendar(QtGui.QGridLayout):
             l.setPalette(palette)
             self.keys.append(l)
             self.addWidget(l, 1, i)
+            
+    def update(self):
+        self.calendar.updateCells()
         
         
         
@@ -426,8 +460,52 @@ class MemoryBrowse(QtGui.QFrame):
             self.cw.addWidget(e)
             
         self.cw.setCurrentIndex(0)
+
+class Example(QtGui.QFrame):
+
+   def __init__(self):
+      super(Example, self).__init__()
+      self.initUI()
+		
+   def initUI(self):
+      self.text = "hello world"
+      self.setGeometry(100,100, 400,300)
+      self.setWindowTitle('Draw Demo')
+      self.show()
+		
+   def paintEvent(self, event):
+      qp = QtGui.QPainter()
+      qp.begin(self)
+      qp.setPen(QtGui.QColor(QtCore.Qt.red))
+      qp.setFont(QtGui.QFont('Arial', 20))
+		
+      qp.drawText(10,50, "hello Python")
+      qp.setPen(QtGui.QColor(QtCore.Qt.blue))
+      qp.drawLine(10,100,100,100)
+      qp.drawRect(10,150,150,100)
+		
+      qp.setPen(QtGui.QColor(QtCore.Qt.yellow))
+      qp.drawEllipse(100,50,100,50)
+      qp.fillRect(200,175,150,100, QtGui.QBrush(QtCore.Qt.SolidPattern))
+      qp.end()
         
-        
+if __name__ == "__main__":
+    import os
+    import sys
+
+    app = QtGui.QApplication(sys.argv)
+    
+    screenShape = QtGui.QDesktopWidget().screenGeometry()
+    width = screenShape.width()/3
+    height = screenShape.height() - 80   
+    
+    b = BaseFrame(width=width, height=height)
+    b.show()
+    
+#    e = Example()
+#    e.show()
+    
+    sys.exit(app.exec_())       
         
         
         
