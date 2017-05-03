@@ -8,6 +8,9 @@ from PyQt4 import QtCore, QtGui
 import mywidgets
 from Memory import Memory
 
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+
 class Caregiver(QtGui.QWidget):
     
     browseClicked = QtCore.pyqtSignal()    
@@ -31,12 +34,14 @@ class Caregiver(QtGui.QWidget):
         #create a frame that has a memories and activities tab
         self.create_memories_tab()
         self.create_activities_tab()
+        self.create_stats_frame()
         
         self.tab = QtGui.QTabWidget()
         self.tab.setMaximumSize(self.width, self.height)
         self.tab.setContentsMargins(0, 0, 0, 0)
         self.tab.addTab(self.memories_tab, 'Memory')
-        self.tab.addTab(self.activities_tab, 'Activities')
+        self.tab.addTab(self.activities_tab, 'Activity')
+        self.tab.addTab(self.stats_frame, 'Statistics')
         self.grid.addWidget(self.tab, 1, 0, 1, 7)
         
         #create some radiobuttons
@@ -96,6 +101,37 @@ class Caregiver(QtGui.QWidget):
         
         self.memories_tab.setLayout(self.memories_grid)
         
+    def create_stats_frame(self):
+        self.stats_frame = QtGui.QFrame()
+        self.stats_frame_grid = QtGui.QGridLayout()
+        self.stats_frame.setLayout(self.stats_frame_grid)
+        
+        #Create the weekly plot
+        self.figure = plt.figure()
+        self.day = range(7)
+        day_labels = ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa']
+        self.counts_day = [1, 2, 1, 0, 0, 0, 0]
+        self.ax1 = self.figure.add_subplot(211)
+        self.ax1.plot(self.day, self.counts_day, '-', color='green')
+
+        self.ax1.set_xticklabels(day_labels)
+
+        #Create the Monthly plot
+        self.month = range(12)
+        month_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
+        self.counts_month = [12, 18, 15, 20, 4, 0, 0, 0, 0, 0, 0, 0]
+        self.ax2 = self.figure.add_subplot(212)
+        self.ax2.plot(self.month, self.counts_month, '-', color='green')
+        
+        plt.ylabel('Activities Completed')
+        plt.sca(self.ax2)
+        plt.xticks(range(12), month_labels)
+        plt.sca(self.ax1)
+        plt.ylabel('Activities Completed')
+
+        self.figure_canvas = FigureCanvas(self.figure)
+        self.stats_frame_grid.addWidget(self.figure_canvas, 0, 0)  
+        
     def send_signal(self):
         '''emit the signal that the browse button was clicked'''
         self.browseClicked.emit()
@@ -118,7 +154,7 @@ class Caregiver(QtGui.QWidget):
         descr = self.descr_entry.toPlainText()
 
         self.account.add_memory(title=title, date=date, loc=loc, descr=descr, tags=tags, pic_filename=filename)     
-
+        print 'before cleared'
         #clear the fields
         self.filename_entry.clear()
         self.tags_entry.clear()
@@ -126,6 +162,7 @@ class Caregiver(QtGui.QWidget):
         self.date_entry.clear()
         self.descr_entry.clear()
         self.location_entry.clear()
+        print 'cleared'
 
     def get_name(self):
         return self.name
@@ -138,7 +175,7 @@ class Caregiver(QtGui.QWidget):
 
     def suggest_activity(self, activity):
         self.current_activity = activity
-        self.current_activity.set_times(20)
+        self.current_activity.set_times(2)
         cur = self.activities_grid.addWidget(self.current_activity) #it's okay to add the widget again, it won't double count
         print self.activities_grid.count()        
         self.activities_grid.setCurrentIndex(cur)

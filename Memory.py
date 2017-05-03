@@ -38,17 +38,17 @@ class Memory(QtGui.QWidget):
         self.title_label.setFont(big_font)
         
         self.date_label = QtGui.QLabel(self.date.toString())
-        self.date_label.setFont(big_font)
+        self.date_label.setFont(small_font)
         
         self.location_label = QtGui.QLabel(self.location)
-        self.location_label.setFont(big_font)
+        self.location_label.setFont(small_font)
         
         line = ''
         for tag in self.tags:
             line += tag + ', '
         line = line[0:-2]
         self.tags_label = QtGui.QLabel(line) 
-        self.tags_label.setFont(big_font)
+        self.tags_label.setFont(small_font)
         
         #Add the description
         self.descr_label = QtGui.QLabel(self.descr)
@@ -57,8 +57,8 @@ class Memory(QtGui.QWidget):
         
         #add the widgets to the layout manager
         self.grid.addWidget(self.pic, 0, 0) 
-        self.grid.addWidget(self.tags_label, 1, 0)
-        self.grid.addWidget(self.title_label, 2, 0)
+        self.grid.addWidget(self.tags_label, 2, 0)
+        self.grid.addWidget(self.title_label, 1, 0)
         self.grid.addWidget(self.location_label, 3, 0)
         self.grid.addWidget(self.date_label, 4, 0)
         self.grid.addWidget(self.descr_label, 5, 0)

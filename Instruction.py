@@ -47,17 +47,16 @@ class Instruction(QtGui.QWidget):
         self.grid = QtGui.QFormLayout(self.frame)
         
         self.title_label = QtGui.QLabel()
+        self.title_label.setFont(self.small_font)
         self.time_label = QtGui.QLabel()
         self.date_label = QtGui.QLabel()
         self.loc_label = QtGui.QLabel()
         self.descr_label = QtGui.QLabel()
         self.descr_label.setWordWrap(True)
         
-        self.grid.addRow('Event:', self.title_label)
-        self.grid.addRow('Date:', self.date_label)
-        self.grid.addRow('Time:', self.time_label)
-        self.grid.addRow('Location:', self.loc_label)
-        self.grid.addRow('Description:', self.descr_label)
+        self.grid.addRow(self.title_label)
+        self.grid.addRow(self.date_label, self.time_label)
+        self.grid.addRow(self.loc_label)
         
         #create the yes and no buttons
         self.completed_button = QtGui.QPushButton('Completed')
@@ -72,6 +71,7 @@ class Instruction(QtGui.QWidget):
         self.grid.addRow(self.g)
         
         self.frame.setLayout(self.grid)
+        
     def completed_instruction(self):
         '''send out a signal when the completed button is pressed'''
         self.completed.emit()
@@ -112,7 +112,7 @@ class Instruction(QtGui.QWidget):
         self.edit_grid.addRow('Date', self.date_entry)
         self.edit_grid.addRow('Time', self.time_entry)
         self.edit_grid.addRow('Location', self.loc_entry)
-        self.edit_grid.addRow('Description', self.descr_entry)
+        #self.edit_grid.addRow('Description', self.descr_entry)
         
         self.edit_frame.setLayout(self.edit_grid)
 

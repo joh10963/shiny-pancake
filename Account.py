@@ -28,7 +28,8 @@ class Account(object):
         self.activities_list = ActivitiesList(account=self)
         
         #Store memory objects
-        self.memories = []  
+        self.memories = [] 
+        self.memories2 = []
         #create a bunch of fake data
         people = ['Bill', 'Frank', 'Jess', 'Penelope', 'Faith', 'Kale', 'JJ']
         for i in range(10):
@@ -38,8 +39,11 @@ class Account(object):
             d = [people[random.randint(0, 6)], people[random.randint(0, 6)], people[random.randint(0, 6)]]
             e = 'stockphoto' + str(i) + '.png'
             self.memories.append(Memory(title=a, date=b, descr=c, tags=d, pic_filename=e))
+            self.memories2.append(Memory(title=a, date=b, descr=c, tags=d, pic_filename=e))
             self.memories[-1].resize_frame(width=self.width, height=3*self.height/6)
+            self.memories2[-1].resize_frame(width=self.width, height=3*self.height/6)
         self.memory_browse = mywidgets.MemoryBrowse(elements=self.memories, tags=self.get_tags(), locs=self.get_locations(), account=self)
+        self.memory_browse_patient = mywidgets.MemoryBrowse(elements=self.memories2, tags=self.get_tags(), locs=self.get_locations(), account=self, small=True)
         
         #populate with fake data -- eventually either read in data or start from scratch
         self.caregivers = []
@@ -70,7 +74,7 @@ class Account(object):
         self.caregivers[self.current_caregiver()].suggest_activity(self.activities_list.get_activity())
         
         #create the patient
-        self.patient = Patient(width=self.width, height=self.height, account=self)
+        self.patient = Patient(width=self.width, height=self.height, account=self, memory_browse=self.memory_browse_patient)
         
     def update_calendar(self):
         self.calendar.update()        
@@ -99,7 +103,7 @@ class Account(object):
         for caregiver in self.caregivers:
             self.cf.addWidget(caregiver)
         self.cs_grid.addWidget(self.cf, 1, 0)
-        
+    
     def check_activity(self, activity):
         '''check if the activity has consecutive times and if it's not overlapping another scheduled activity'''
         return True
@@ -135,10 +139,14 @@ class Account(object):
         return self.colors
         
     def add_memory(self, title='', date=None, loc='', descr='', tags=None, pic_filename=''):
-        self.memories.append(Memory(title=title, date=date, loc=loc, descr=descr, tags=tags, pic_filename=pic_filename))
-        self.memories[-1].resize_frame(width=self.width, height=3*self.height/5)
+        self.memories.append(Memory(title=title, date=date, loc=loc, descr=descr, tags=tags, pic_filename=pic_filename))      
+        self.memories[-1].resize_frame(width=self.width, height=3*self.height/5)      
         self.memory_browse.add_element(self.memories[-1], tags=self.get_tags(), locs=self.get_locations())
-    
+
+        self.memories2.append(Memory(title=title, date=date, loc=loc, descr=descr, tags=tags, pic_filename=pic_filename))         
+        self.memories2[-1].resize_frame(width=self.width, height=3*self.height/5)          
+        self.memory_browse_patient.add_element(self.memories2[-1], tags=self.get_tags(), locs=self.get_locations())
+  
     def get_memories(self):
         return self.memories
         

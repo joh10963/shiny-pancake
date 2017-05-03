@@ -7,6 +7,8 @@ Created on Fri Feb 17 14:43:49 2017
 
 import numpy as np
 
+from collections import deque
+
 import math
 
 import matplotlib.pyplot as plt
@@ -31,10 +33,10 @@ def get_patient_feedback(activites):
     0: they don't like it
     '''
     #they like all the activities
-    output = np.ones((1, activites))
+    output = np.zeros((1, activites))
     
     #I'm just gonna say they like the first 10 of the activities
-    #output[0, 0:10] = 1
+    output[0, 0:10] = 1
     
     return output
     
@@ -57,9 +59,9 @@ def create_model(activities, inputs):
 def get_simulation_reward_activity(action):
     '''only accept certain activities'''
     if action in range(10):
-        return 1.0
+        return 10.0
     else:
-        return -1.0
+        return -10.0
 
 def get_simulation_reward_attribute(action, state):
     '''Only accept Attribute 3 100'''
@@ -144,24 +146,41 @@ def run_simulation(model, state):
     
     #create arrays to save the suggested activity and the accepted activity
     epochs = 50
-    suggested = np.zeros((1, epochs))
+    suggested = np.full((1, epochs), state.shape[0]+10)
     accepted = 0
     accepted_matrix = np.zeros((1, epochs))
     inputs = state.size
     activities = state.shape[0]
+    recent_activities = deque() #cant suggest an activity if it's in the past 5
     
-    gamma = 0.4
-#    last_action = -1
-
+    gamma = 0.1
+    
+    i = 0
     for i in range(epochs):
+        #print 'round ' + str(i)
         qval = model.predict(state.reshape(1, inputs), batch_size=1)
         action = np.argmax(qval)
-#        if action == last_action:
-#            q = np.array(qval, copy=True)
-#            q[0, action] = 0
-#            action = np.argmax(q)
-#        last_action = action
-        
+        while action in recent_activities: #directly to the algorithm - don't suggest to patient
+            #print 'action was already suggested' + str(action) + ' ' + str(recent_activities)
+            reward = 1
+            
+            newQ = model.predict(state.reshape(1,inputs), batch_size=1)
+            maxQ = np.argmax(newQ)
+            
+            y = np.zeros((1, activities))
+            y[:] = qval[:]
+            update = reward + gamma*maxQ
+    
+            y[0][action] = update
+            model.fit(state.reshape(1,inputs), y, batch_size=1, nb_epoch=1, verbose=0)
+            
+            action = np.random.randint(0, activities)
+            
+        #print 'action was not already suggested' + str(action)
+        #pop the suggested activity onto the recent_activities
+        recent_activities.append(action)
+        if len(recent_activities) > 3:
+            recent_activities.popleft()
         reward = get_simulation_reward_activity(action)
         #reward = get_simulation_reward_attribute(action, state)
         
@@ -180,6 +199,8 @@ def run_simulation(model, state):
 
         y[0][action] = update
         model.fit(state.reshape(1,inputs), y, batch_size=1, nb_epoch=1, verbose=0)
+        
+        i += 1
             
     return suggested, accepted_matrix
     
@@ -215,17 +236,20 @@ def random_simulation_attributes(state, activities):
     
     return suggested_matrix, accepted_matrix
 
-def window(suggested, accepted, window_length=10.0):
+def window(suggested, accepted, num_acts, window_length=10.0):
     windows = int(math.ceil(suggested.size/window_length))
     output = np.zeros((1, windows))
     
     for i in range(windows):
         j = 0
+        sugg = 0
         while j < window_length and i*window_length+j < suggested.size:
             if accepted[0, int(i*window_length+j)] == 1:
                 output[0, i] += 1
+            if suggested[0, int(i*window_length+j)] < num_acts:
+                sugg += 1
             j += 1
-        output[0, i] = output[0, i]/float(j)
+        output[0, i] = output[0, i]/float(sugg)
 
     return output            
 
@@ -234,12 +258,16 @@ def plot_results(suggested_matrix, accepted_matrix, activities, attributes=False
     plt.figure()
     
     time = np.arange(0, suggested_matrix.size)
+    sugg = 0
     
     for i in range(time.size):
+        if suggested_matrix[0, i] < activities:
+            sugg += 1
         if accepted_matrix[0, i]:
             plt.plot(time[i], suggested_matrix[0, i], 'o', color='green')
         else:
             plt.plot(time[i], suggested_matrix[0, i], 'o', color='red')
+            
     
     plt.xlabel('Iteration')
     plt.ylabel('Activity')
@@ -253,8 +281,10 @@ def plot_results(suggested_matrix, accepted_matrix, activities, attributes=False
     
     plt.show()
     
+    return np.sum(accepted_matrix)/sugg
+    
 def main2():
-    activities = 20
+    activities = 25
     attributes = 5
     state = create_random_state(activities, attributes)
     feedback = get_patient_feedback(activities)
@@ -322,15 +352,17 @@ def main2():
     for i in range(50):
         print 'starting round ' + str(i)
         model = create_model(state.shape[0], state.size)
-        train_model(model, state, feedback)
+        #train_model(model, state, feedback)
         suggested, accepted = run_simulation(model, state)
-        #plot_results(suggested, accepted, activities)
-        output = window(suggested, accepted, 5.0)
+        #print suggested
+        #ratio = plot_results(suggested, accepted, activities)
+        #print ratio
+        output = window(suggested, accepted, activities, 5.0)
         windowed_result[i] = output
     
     plt.figure()
     time = np.arange(0, windowed_result.shape[1])
-    avg_window = np.mean(windowed_result, axis=0)
+    avg_window = np.nanmean(windowed_result, axis=0)
     plt.plot(time, avg_window, 'o', color='blue')
     plt.xlabel('Window')
     plt.ylabel('Percent Accepted')

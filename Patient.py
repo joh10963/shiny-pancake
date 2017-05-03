@@ -10,10 +10,16 @@ import mywidgets
 
 class Patient(mywidgets.BaseFrame):
     
-    def __init__(self, width, height, parent=None, account=None):
+    def __init__(self, width, height, parent=None, account=None, memory_browse=None):
         mywidgets.BaseFrame.__init__(self, width, height, parent)
         
+        self.memory_browse = memory_browse
         self.account = account
+        
+        self.small_font = QtGui.QFont()
+        self.small_font.setPointSize(16)     
+        
+        self.activity_count = 0 #count how many activities are done in a session
         
         #patient screen flags - so we know what is displayed (only display 1 thing at a time)
         self.already_visible = False #flag for patient yes/no question  
@@ -32,16 +38,23 @@ class Patient(mywidgets.BaseFrame):
         
         #create the question frame
         self.question_frame = QtGui.QFrame()
-        self.question_layout = QtGui.QGridLayout()
+        self.question_layout = QtGui.QVBoxLayout()
         self.question_frame.setLayout(self.question_layout)
         self.question_label = QtGui.QLabel()
+        self.question_label.setFont(self.small_font)
         self.accept_button = QtGui.QPushButton('Yes')
         self.accept_button.clicked.connect(self.accepted_activity)
         self.decline_button = QtGui.QPushButton('No')
         self.decline_button.clicked.connect(self.declined_activity)
-        self.question_layout.addWidget(self.question_label, 0, 0, 1, 2)
-        self.question_layout.addWidget(self.accept_button, 1, 0)
-        self.question_layout.addWidget(self.decline_button, 1, 1)
+        self.hgrid = QtGui.QHBoxLayout()
+        self.hgrid.addStretch(1)
+        self.hgrid.addWidget(self.accept_button)
+        self.hgrid.addWidget(self.decline_button)
+        self.hgrid.addStretch(1)
+        self.question_layout.addWidget(self.question_label)
+        self.question_layout.addLayout(self.hgrid)
+        self.question_layout.addStretch(10)
+        
         self.stack.addWidget(self.question_frame)
         
         #create a blank frame
@@ -49,15 +62,8 @@ class Patient(mywidgets.BaseFrame):
         self.stack.addWidget(self.blank)
         self.stack.setCurrentWidget(self.blank)
         
-        self.but = QtGui.QPushButton('doo')
-        self.grid.addWidget(self.but, 1, 0)
-        self.but.clicked.connect(self.doo)
-        
-    def doo(self):
-        print self.activity_queue
-        print self.instructions
-        print self.times
-        
+        #add the memory browse
+        self.grid.addWidget(self.memory_browse, 1, 0)
         
     def send(self, activity):
         '''send the activity to the patient screen'''
@@ -139,6 +145,8 @@ class Patient(mywidgets.BaseFrame):
         #then set the timer again
         self.current_instruction_index += 1
         if self.current_instruction_index >= len(self.instructions[0]):
+            self.activity_count += 1
+            print 'activity count' + str(self.activity_count)
             self.stack.setCurrentWidget(self.blank)
             self.is_during_activity = False
             self.instructions.popleft()
@@ -164,9 +172,7 @@ class Patient(mywidgets.BaseFrame):
         else:
             self.stack.setCurrentWidget(self.blank)
             self.timer.start(self.times[0][self.current_instruction_index])
-            
-        
-        
+
     def canceled_instruction(self):
         self.timer.stop()
         self.stack.setCurrentWidget(self.blank)
@@ -191,7 +197,9 @@ class Patient(mywidgets.BaseFrame):
                 self.question_label.setText(self.activity_queue[0].get_question())
                 self.already_visible = True
         
-            
+    def get_activities_completed(self):
+        return self.activity_count
+        
         
         
 
@@ -210,12 +218,12 @@ if __name__ == "__main__":
     pat.show()
     pat.send(act)
     
-    msg = QtGui.QMessageBox()
-    msg.setIcon(QtGui.QMessageBox.Warning)
-    msg.setText("This activity cannot be scheduled because it is past the time")
-    msg.setWindowTitle("Scheduling Error")
-    msg.setStandardButtons(QtGui.QMessageBox.Ok)
-    msg.exec_()
+#    msg = QtGui.QMessageBox()
+#    msg.setIcon(QtGui.QMessageBox.Warning)
+#    msg.setText("This activity cannot be scheduled because it is past the time")
+#    msg.setWindowTitle("Scheduling Error")
+#    msg.setStandardButtons(QtGui.QMessageBox.Ok)
+#    msg.exec_()
     
     sys.exit(app.exec_())
         

@@ -51,7 +51,7 @@ class InstructionList(QtGui.QWidget):
         if len(self.instructions) > 0:
             current_date = QtCore.QDate.currentDate()
             current_time = QtCore.QTime.currentTime()
-            current_time = current_time.addSecs(30)
+            current_time = current_time.addSecs(20)
             self.instructions[0].set_time(current_time)
             self.instructions[0].set_date(current_date)
             for i in range(1, len(self.instructions)):

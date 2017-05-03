@@ -54,7 +54,7 @@ class ActivitiesList(QtGui.QWidget):
             self.activities.append(Activity(title='The other Cool Activity', index=2, instruction_list=instructionlist3))
             self.activities.append(Activity(title='This Activity', index=3, instruction_list=instructionlist4))
             self.activities.append(Activity(title='That Activity', index=4, instruction_list=instructionlist5))
-            self.activities.append(Activity(title='The Activity', index=5, instruction_list=instructionlist6))
+            self.activities.append(Activity(title='Going Fishing', index=5, instruction_list=instructionlist6))
             
         for activity in self.activities:
             activity.accepted.connect(self.ask_patient)

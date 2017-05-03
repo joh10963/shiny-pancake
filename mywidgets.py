@@ -350,7 +350,7 @@ class AvailabilityCalendar(QtGui.QGridLayout):
 class MemoryBrowse(QtGui.QFrame):
     '''displays one widget from elements at a time. scroll through list with buttons'''   
     
-    def __init__(self, parent=None, elements=None, tags=None, locs=None, account=None): 
+    def __init__(self, parent=None, elements=None, tags=None, locs=None, account=None, small=False): 
         QtGui.QFrame.__init__(self, parent)        
         
         self.account = account
@@ -385,7 +385,8 @@ class MemoryBrowse(QtGui.QFrame):
         
         
         #add the widgets to the frame
-        self.grid.addWidget(self.home_button, 0, 0)
+        if not small:
+            self.grid.addWidget(self.home_button, 0, 0)
         self.grid.addWidget(self.cw, 1, 0, 1, 2)
         self.grid.addWidget(self.left, 2, 0)
         self.grid.addWidget(self.right, 2, 1)
@@ -406,7 +407,8 @@ class MemoryBrowse(QtGui.QFrame):
         self.search_layout.addRow('Date', self.date_search)
         self.search_layout.addRow(self.search_button)
         
-        self.grid.addLayout(self.search_layout, 3, 0, 1, 2)
+        if not small:
+            self.grid.addLayout(self.search_layout, 3, 0, 1, 2)
             
         #Set the layout manager to the frame
         self.setLayout(self.grid)
@@ -436,12 +438,12 @@ class MemoryBrowse(QtGui.QFrame):
         
         self.current = 0
         self.cw.setCurrentIndex(self.current)
-        
         #Uodate other things
         self.tags_search.clear()
         self.tags_search.addItems(self.tags)
         self.loc_search.clear()
         self.loc_search.addItems(self.locs)
+
         
     def search(self):
         tag = self.tags_search.currentText()
