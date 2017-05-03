@@ -38,8 +38,9 @@ class Account(object):
             c = 'Description ' + str(i) + 'Generic description of the event, add more details, more details, descriptions, more descriptions, it was fun'
             d = [people[random.randint(0, 6)], people[random.randint(0, 6)], people[random.randint(0, 6)]]
             e = 'stockphoto' + str(i) + '.png'
-            self.memories.append(Memory(title=a, date=b, descr=c, tags=d, pic_filename=e))
-            self.memories2.append(Memory(title=a, date=b, descr=c, tags=d, pic_filename=e))
+            l = 'Location ' + str(i)
+            self.memories.append(Memory(title=a, date=b, loc=l, descr=c, tags=d, pic_filename=e))
+            self.memories2.append(Memory(title=a, date=b, loc=l, descr=c, tags=d, pic_filename=e))
             self.memories[-1].resize_frame(width=self.width, height=3*self.height/6)
             self.memories2[-1].resize_frame(width=self.width, height=3*self.height/6)
         self.memory_browse = mywidgets.MemoryBrowse(elements=self.memories, tags=self.get_tags(), locs=self.get_locations(), account=self)

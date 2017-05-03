@@ -10,8 +10,6 @@ import numpy as np
 
 from collections import deque
 
-import time
-
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 
@@ -19,48 +17,30 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 from keras.optimizers import RMSprop
 
-
-
-
-#    for i in range(epochs):
-#        #print 'round ' + str(i)
-#        model, suggest, accept, order = run_single_epoch(model, state, activities, inputs, recent_activities, gamma)
-#        suggested[0, i] = suggest
-#        accepted_matrix[0, i] = accept
-#        
-#        #update the labels
-#        for j in range(activities):
-#            labels[j].setText(str(order[0, j]))
-#        time.sleep(1)
-
-#    figure, ratio = plot_results(suggested, accepted, activities)
-#    print ratio
-
-#    canvas = FigureCanvas(figure)
-#    
-#    grid.addWidget(canvas, 0, 0)
-#    
+   
 class Demo():
     
     def __init__(self):
         self.frame = QtGui.QFrame()
-        self.frame.show() 
+        #self.frame.show() 
         self.grid = QtGui.QGridLayout()
-        self.frame.setLayout(self.grid)   
+        self.frame.setLayout(self.grid)
+        
+        self.green_p = QtGui.QPalette()
+        self.green_p.setColor(QtGui.QPalette.Foreground, QtCore.Qt.green)
+        self.red_p = QtGui.QPalette()
+        self.red_p.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         
         #create 25 labels for each activity
         self.labels = []
         for i in range(25):
             self.labels.append(QtGui.QLabel())
-            self.labels[-1].setText(str(i))
+            self.labels[-1].setText('Activity ' + str(i))
             self.grid.addWidget(self.labels[-1], i, 1)
-        
-    def run(self):
             
         self.activities = 25
-        self.attributes = 5
+        self.attributes = 3
         self.create_random_state()
-        self.feedback = self.get_patient_feedback(self.activities)
         
         self.create_model(self.state.shape[0], self.state.size)
         
@@ -75,17 +55,73 @@ class Demo():
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
         self.grid.addWidget(self.canvas, 0, 0, 25, 1)
-        plt.xlabel('Iteration')
+        plt.xlabel('Time')
         plt.ylabel('Activity')
         plt.ylim([0, self.activities])
         
         self.t = np.arange(0, self.suggested_matrix.size)
         
         self.gamma = 0.1
+        self.epsilon = 1.0
             
         self.count = 0    
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.set_labels)
+         
+        #create a frame to get the user input
+        self.qframe = QtGui.QWidget()
+        self.qgrid = QtGui.QGridLayout()
+        self.qframe.setLayout(self.qgrid)
+        
+        self.l1 = self.attributes*[None] #labels for attributes
+        for i in range(self.attributes):
+            self.l1[i] = QtGui.QLabel('Attribute ' + str(i))
+            self.qgrid.addWidget(self.l1[i], 0, i+3)
+        
+        self.cb = self.activities*[None]
+        self.ls = self.activities*[None]
+        self.dd = self.activities*[None] #dropdowns [activity, attribute]
+        for i in range(self.activities):
+            self.cb[i] = QtGui.QCheckBox()
+            self.ls[i] = QtGui.QLabel()
+            self.ls[i].setText('Activity ' +str(i))
+            
+            self.qgrid.addWidget(self.cb[i], i+2, 0)
+            self.qgrid.addWidget(self.ls[i], i+2, 1)
+            
+            self.dd[i] = self.attributes*[None]
+            for j in range(self.attributes):
+                self.dd[i][j] = QtGui.QComboBox()
+                self.dd[i][j].addItems(['0', '1', '2'])
+                self.dd[i][j].setCurrentIndex(np.random.randint(0, 3))
+                
+                self.qgrid.addWidget(self.dd[i][j], i+2, j+3)
+                
+        self.run_but = QtGui.QPushButton('Run')
+        self.run_but.clicked.connect(self.get_input)
+        self.qgrid.addWidget(self.run_but, self.activities+3, 0, 1, self.attributes+3)
+        
+        #check 10 activities
+        for i in range(10):
+            self.cb[i].setChecked(True)
+            
+        self.qframe.show()
+         
+    def get_input(self):
+        '''set self.feedback based on check buttons'''
+        self.feedback = np.zeros((1, self.activities))
+        for i in range(self.activities):
+            if self.cb[i].isChecked():
+                self.feedback[0, i] = 1
+                self.labels[i].setPalette(self.green_p)
+            else:
+                self.labels[i].setPalette(self.red_p)
+        
+        self.qframe.hide()
+        self.run()
+        
+    def run(self):
+        self.frame.show()
         self.timer.start(1000)
     
     def get_frame(self):
@@ -111,20 +147,6 @@ class Demo():
         for i in range(self.activities):
             for j in range(self.attributes):
                     self.state[i, j, np.random.randint(0, 3)] = 1
-       
-    def get_patient_feedback(self, activites):
-        '''Ask the patient which activity they like better
-        1 or 0 for each activity
-        1: they like it 
-        0: they don't like it
-        '''
-        #they like all the activities
-        output = np.zeros((1, activites))
-        
-        #I'm just gonna say they like the first 10 of the activities
-        output[0, 0:10] = 1
-        
-        return output
         
     def get_simulation_reward_activity(self, action):
         '''only accept certain activities'''
@@ -151,14 +173,16 @@ class Demo():
             y[0][action] = update
             self.model.fit(self.state.reshape(1,self.inputs), y, batch_size=1, nb_epoch=1, verbose=0)
             
-            action = np.random.randint(0, self.activities)
+            a = qval.argsort()
+            print a
+            index = np.random.randint(0, int(self.activities/2))
+            print index
+            action = a[0, index]
             
         #print 'action was not already suggested' + str(action)
         #pop the suggested activity onto the recent_activities
         self.recent_activities.append(action)
-        m = int(np.sum(self.feedback)/3)
-        print m
-        if len(self.recent_activities) > m:
+        if len(self.recent_activities) > 2:
             self.recent_activities.popleft()
         reward = self.get_simulation_reward_activity(action)
         
@@ -170,14 +194,15 @@ class Demo():
         update = reward + self.gamma*maxQ
     
         y[0][action] = update
-        self.model.fit(self.state.reshape(1,self.inputs), y, batch_size=1, nb_epoch=1, verbose=0)
+        self.model.fit(self.state.reshape(1,self.inputs), y, batch_size=1, nb_epoch=1, verbose=0)     
         
         #update the matrices of the saved values
         accepted = 0
         if reward > 0.0:
             accepted = 1
         
-        return action, accepted, np.argsort(qval)
+        order = qval.argsort()
+        return action, accepted, order
         
     def plot_results(self):
         
@@ -186,10 +211,6 @@ class Demo():
                 self.figure.axes[0].plot(self.t[i], self.suggested_matrix[0, i], 'o', color='green')
             else:
                 self.figure.axes[0].plot(self.t[i], self.suggested_matrix[0, i], 'o', color='red')
-        
-        #return figure, np.sum(self.accepted_matrix)/sugg
-
-        
     
     def set_labels(self):
     
@@ -201,8 +222,14 @@ class Demo():
         print ratio
 
         #update the labels
-        for j in range(25):
-            self.labels[j].setText(str(order[0, j]))
+        i = 0 #counter for label position
+        for j in reversed(range(25)):
+            self.labels[i].setText('Activity ' + str(order[0, j]))
+            if self.feedback[0, order[0, j]] == 1: #green
+                self.labels[i].setPalette(self.green_p)
+            else:
+                self.labels[i].setPalette(self.red_p)
+            i += 1
         self.plot_results()
         self.count += 1
         if self.count >= self.epochs:
@@ -215,8 +242,8 @@ if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)  
 
     d = Demo()   
-    f = d.get_frame()
-    f.show()
-    d.run()
+    #f = d.get_frame()
+    #f.show()
+    #d.run()
     
     sys.exit(app.exec_())

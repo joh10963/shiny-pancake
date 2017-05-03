@@ -48,13 +48,33 @@ class ActivitiesList(QtGui.QWidget):
                              Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
                              Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
             instructionlist6 = InstructionList(instructions=instructions6)
+            instructions7 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+            instructionlist7 = InstructionList(instructions=instructions7)
+            instructions8 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+            instructionlist8 = InstructionList(instructions=instructions8)
+            instructions9 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+            instructionlist9 = InstructionList(instructions=instructions9)
+            instructions10 = [Instruction(title='Instruction1', date=None, time=None, location='Location1', description='Description1'),
+                             Instruction(title='Instruction2', date=None, time=None, location='Location2', description='Description2'),
+                             Instruction(title='Instruction3', date=None, time=None, location='Location3', description='Description3')]
+            instructionlist10 = InstructionList(instructions=instructions10)
         
-            self.activities.append(Activity(title='Cool Activity', index=0, instruction_list=instructionlist1))
-            self.activities.append(Activity(title='Another Cool Activity', index=1, instruction_list=instructionlist2))
-            self.activities.append(Activity(title='The other Cool Activity', index=2, instruction_list=instructionlist3))
-            self.activities.append(Activity(title='This Activity', index=3, instruction_list=instructionlist4))
-            self.activities.append(Activity(title='That Activity', index=4, instruction_list=instructionlist5))
-            self.activities.append(Activity(title='Going Fishing', index=5, instruction_list=instructionlist6))
+            self.activities.append(Activity(title='Visit the Humane Society', index=0, instruction_list=instructionlist1))
+            self.activities.append(Activity(title='Do a new jigsaw puzzle', index=1, instruction_list=instructionlist2))
+            self.activities.append(Activity(title='Go to the zoo', index=2, instruction_list=instructionlist3))
+            self.activities.append(Activity(title='Visit the planetarium', index=3, instruction_list=instructionlist4))
+            self.activities.append(Activity(title='Play poker', index=4, instruction_list=instructionlist5))
+            self.activities.append(Activity(title='Organize your drawers', index=5, instruction_list=instructionlist6))
+            self.activities.append(Activity(title='Go to a baseball game', index=6, instruction_list=instructionlist7))
+            self.activities.append(Activity(title='Plant new flowers and garden', index=7, instruction_list=instructionlist8))
+            self.activities.append(Activity(title='Go to the science museum', index=8, instruction_list=instructionlist9))
+            self.activities.append(Activity(title='Go fishing on the lake', index=9, instruction_list=instructionlist10))
             
         for activity in self.activities:
             activity.accepted.connect(self.ask_patient)
